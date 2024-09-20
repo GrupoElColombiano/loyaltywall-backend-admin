@@ -1,0 +1,35 @@
+import { Repository, EntityManager } from 'typeorm';
+import { PointsMovement } from './entity/points_movement.entity';
+import { PointsEvents } from './entity/points_events.entity';
+import { UserPoints } from './entity/user_points.entity';
+import { UserAdminEntity } from '../users/entities/user.entity';
+import { UserPlan } from 'src/common/entity/user-plan.entity';
+import { RegisterlogService } from 'src/registerlog/registerlog.service';
+import { PaymentTransaction } from 'src/registerlog/entity/payment-log.entity';
+import { HttpService } from '@nestjs/axios';
+export declare class PuntosUsuarioService {
+    private pointsMovementRepository;
+    private pointsEventsRepository;
+    private userPointsRepository;
+    private userAdminRepository;
+    private userPlanRepository;
+    private paymentTransactionRepository;
+    private registerLogService;
+    private entityManager;
+    private httpService;
+    constructor(pointsMovementRepository: Repository<PointsMovement>, pointsEventsRepository: Repository<PointsEvents>, userPointsRepository: Repository<UserPoints>, userAdminRepository: Repository<UserAdminEntity>, userPlanRepository: Repository<UserPlan>, paymentTransactionRepository: Repository<PaymentTransaction>, registerLogService: RegisterlogService, entityManager: EntityManager, httpService: HttpService);
+    findAll(body: any): Promise<any>;
+    findOne(idKeycloak: string): Promise<any>;
+    create(body: any): Promise<any>;
+    update(id: number, body: any): Promise<any>;
+    delete(id: number): Promise<any>;
+    findAllPointsMovement(body: any): Promise<any>;
+    findOnePointsMovement(id: number): Promise<PointsMovement>;
+    createPointsMovement(body: any): Promise<any>;
+    dateExpiration(date_expire: Date): Promise<any>;
+    findAllPointsToExpire(idKeycloak: string): Promise<any>;
+    formatDateTime(date: any): Promise<string>;
+    findPointTotalUser(body: any): Promise<any>;
+    findTotalPointsUser(idKeycloak: any): Promise<any>;
+    ListPointsToBeAddressed(userId: any): Promise<any[]>;
+}

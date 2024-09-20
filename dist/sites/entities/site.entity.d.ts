@@ -1,0 +1,37 @@
+import { PlansProductCategory } from '../../common/entity/plans-products-categories.entity';
+import { Product } from '../../product/entity/product.entity';
+import { Category } from '../../category/entity/category.entity';
+import { SitesPlan } from '../../common/entity/sites-plan.entity';
+import { Plan } from '../../plans/entity/plan.entity';
+import { PointValue } from '../../gamification/entities/point-value.entity';
+import { ExpireTimePoint } from '../../gamification/entities/expire_point.entity';
+import { Cluster } from '../../gamification/entities/cluster.entity';
+import { Event } from '../../gamification/entities/event.entity';
+import { PointsEvents } from '../../puntos_usuario/entity/points_events.entity';
+import { PointsMovement } from '../../puntos_usuario/entity/points_movement.entity';
+import { ClusterPenalization } from '../../gamification/entities/cluster_penalization.entity';
+import { UserPoints } from '../../puntos_usuario/entity/user_points.entity';
+import { EventCluster } from 'src/gamification/entities/event_cluster.entity';
+export declare class Site {
+    idSite: number;
+    name: string;
+    description: string;
+    url: string;
+    isActive: boolean;
+    createAt: Date;
+    updateAt: Date;
+    category: Category[];
+    plansProductCategory: PlansProductCategory[];
+    products: Product[];
+    sitesPlan: SitesPlan[];
+    plan: Plan[];
+    point_value: PointValue;
+    expire_time_point: ExpireTimePoint[];
+    clusters: Cluster[];
+    events: Event[];
+    pointsEvents: PointsEvents[];
+    pointsMovement: PointsMovement[];
+    clusterPenalization: ClusterPenalization[];
+    userPoints: UserPoints[];
+    event_clusters: EventCluster;
+}

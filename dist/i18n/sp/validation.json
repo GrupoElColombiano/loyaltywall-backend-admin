@@ -1,0 +1,6 @@
+{
+  "IS_STRING": "{property} debe ser un texto.",
+  "NOT_EMPTY": "{property} no puede estar vacío",
+  "IS_URL": "{property} debe ser una URL válida.",
+  "IS_BOOLEAN": "{property} debe ser un valor booleano."
+}
