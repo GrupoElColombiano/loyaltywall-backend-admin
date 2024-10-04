@@ -7,12 +7,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { PaywallModule } from 'src/common/entity/paywallModule.entity';
 import { RolesModule } from 'src/roles/roles.module';
 import { RegisterlogModule } from 'src/registerlog/registerlog.module';
+import { PuntosUsuarioModule } from 'src/puntos_usuario/puntos_usuario.module';
 
 @Module({
   imports: [
     HttpModule,
     CommonModule,
     RolesModule,
+    PuntosUsuarioModule,
     TypeOrmModule.forFeature([
       PaywallModule
     ]),

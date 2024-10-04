@@ -50,6 +50,7 @@ export class ProductController {
     type: [Product],
   })
   async findAll(): Promise<any[]> {
+    console.log("✅ find all list ✅");
     return await this.productService.findAll();
   }
 

@@ -37,7 +37,7 @@ export class PuntosUsuarioService {
 
   //Servicios de PonitsEvents(Historial de puntos para un usuario por sitio), PaymenTransaction
   async findAll(body: any): Promise<any> {
-    console.log('body', body)
+    console.log('body findAll', body)
     const { idKeycloak, site } = body;
     const userEvent: any = [];
     try {
@@ -193,6 +193,7 @@ export class PuntosUsuarioService {
   //   }
   // }
   async findAllPointsToExpire(idKeycloak: string): Promise<any> {
+  console.log("🚀 ~ PuntosUsuarioService ~ findAllPointsToExpire ~ idKeycloak:", idKeycloak)
 
     try {
     //   const rawQuery = `
@@ -227,8 +228,10 @@ export class PuntosUsuarioService {
 
 
 //Debo utilizar Axios para hacer la petición a la API de https://api-cliente.loyaltywall.com/gamification/point_tobe_addressed/idKeycloak
-      const response = await this.httpService.get(`https://api-cliente.loyaltywall.com/gamification/point_tobe_addressed/${idKeycloak}`).toPromise();
+      // const response = await this.httpService.get(`https://api-cliente.loyaltywall.com/gamification/point_tobe_addressed/${idKeycloak}`).toPromise();
+      const response = await this.httpService.get(`https://apiclient.loyaltywall.com/gamification/point_tobe_addressed/${idKeycloak}`).toPromise();
       // console.log('response: ', response.data);
+      console.log("🚀 ~ PuntosUsuarioService ~ findAllPointsToExpire ~ response:", response)
 
       //Recorrer el arreglo de puntos a expirar para sumarlos
       let pointsToExpire = 0;

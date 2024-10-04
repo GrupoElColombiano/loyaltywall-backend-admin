@@ -31,6 +31,7 @@ export class PaywallController {
 
   @Get()
   findAll() {
+    console.log("Executed find all")
     return this.paywallService.findAll();
   }
 

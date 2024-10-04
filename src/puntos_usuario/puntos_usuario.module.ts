@@ -33,6 +33,7 @@ import { HttpModule } from '@nestjs/axios';
   HttpModule,
 ],
   controllers: [PuntosUsuarioController],
-  providers: [PuntosUsuarioService]
+  providers: [PuntosUsuarioService],
+  exports: [PuntosUsuarioService]
 })
 export class PuntosUsuarioModule {}

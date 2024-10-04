@@ -9,6 +9,7 @@ export class PuntosUsuarioController {
 
   @Post('puntos_events')
   findAll(@Body() body: string) {
+    console.log("💊 💊 - executed puntos_events - 💊 💊")
     return this.puntosUsuarioService.findAll(body);
   }
 
@@ -44,13 +45,13 @@ export class PuntosUsuarioController {
   //Metodo GET que recibe por query el email del usuario
   @Get('points_expired/:idKeycloak')
   findPointsConsumed(@Param('idKeycloak') idKeycloak: string) {
-    console.log('idKeycloak', idKeycloak)
+    console.log('✅ points_expired/:idKeycloak ✅ idKeycloak', idKeycloak)
     return this.puntosUsuarioService.findAllPointsToExpire(idKeycloak);
   }
 
   @Get('puntos_movement/list/:idKeycloak')
   findPointsMovement(@Param('idKeycloak') idKeycloak: string) {
-    console.log('idKeycloak', idKeycloak)
+    console.log('✅ puntos_movement/list/:idKeycloak ✅ idKeycloak', idKeycloak)
     return this.puntosUsuarioService.findTotalPointsUser(idKeycloak);
   }
 
