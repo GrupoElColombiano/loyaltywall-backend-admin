@@ -36,7 +36,7 @@ export class KeycloakService {
     this.clientId = this.configService.get('KEYCLOAK_CLIENT_ID');
     this.clientSecret = this.configService.get('KEYCLOAK_SECRET');
 
-    this.outsideRealm = this.configService.get('KEYCLOAK_REALM_CLIENT');
+    this.outsideRealm = this.configService.get('KEYCLOAK_OUTSIDE_REALM');
     this.outsideClientId = this.configService.get('KEYCLOAK_OUTSIDE_CLIENT_ID');
     this.outsideClientSecret = this.configService.get(
       'KEYCLOAK_OUTSIDE_SECRET'
@@ -120,7 +120,6 @@ export class KeycloakService {
         max: maxLimit, // Establece el número máximo de elementos por página.
       };
 
-      console.log(" baseUrl ", baseUrl)
       // Primera llamada para obtener el total de usuarios
       const totalResponse = await firstValueFrom(
         this.httpService.get(baseUrl, {
