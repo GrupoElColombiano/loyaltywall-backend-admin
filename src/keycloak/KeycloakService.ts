@@ -365,6 +365,7 @@ export class KeycloakService {
    * @returns {Promise<any>} A promise that resolves to the found user data.
    */
   async findUser(tokenAccess: string, id: any): Promise<any> {
+
     console.log('Servicio Keycloak', tokenAccess, id)
     try {
       const headersRequest = {
@@ -373,18 +374,17 @@ export class KeycloakService {
       };
 
       const url = `https://auth.loyaltywall.com/admin/realms/${this.realm}/users/${id}`;
-      const response = await firstValueFrom(
-        this.httpService.get(url, { headers: headersRequest })
-      );
+      const response = await fetch(url, { 
+        method: "GET",
+        headers: headersRequest 
+      }).then(response => response.json()).catch(err => console.log('❌ error ❌', err));
 
-      if (response.status === 200) {
-        return response.data; //Return the found user.
-      } else if (response.status === 404) {
-        console.log('response', response.data);
-        throw new NotFoundException('User not found');
-      } else {
-        throw new Error('Unknown error while searching for the user');
-      }
+      console.log("🚀 ~ KeycloakService ~ findUser ~ response:", response)
+      if (response?.username) {
+        return response;
+      } 
+
+      throw new NotFoundException('User not found');
     } catch (error) {
       throw new NotFoundException(error.message);
     }
