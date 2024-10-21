@@ -50,7 +50,7 @@ async function bootstrap() {
       detailedErrors: false,
     }),
   );
-  await app.listen(180); // DEV PORT
-  // await app.listen(80); // PROD PORT
+  // await app.listen(180); // DEV PORT
+  await app.listen(80); // PROD PORT
 }
 bootstrap();
