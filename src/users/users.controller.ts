@@ -39,11 +39,6 @@ export class UsersController {
     const { username, password } = body;
     const { KEYCLOAK_AUTH_SERVER_URL_CLIENT, KEYCLOAK_REALM_CLIENT, KEYCLOAK_CLIENT_ID_CLIENT, KEYCLOAK_SECRET_CLIENT } = process.env;
 
-    console.log(" KEYCLOAK_AUTH_SERVER_URL_CLIENT ", KEYCLOAK_AUTH_SERVER_URL_CLIENT);
-    console.log(" KEYCLOAK_CLIENT_ID_CLIENT ", KEYCLOAK_CLIENT_ID_CLIENT);
-    console.log(" KEYCLOAK_CLIENT_ID_CLIENT ", KEYCLOAK_CLIENT_ID_CLIENT);
-    console.log(" KEYCLOAK_SECRET_CLIENT: ", KEYCLOAK_SECRET_CLIENT);
-
     if (!KEYCLOAK_AUTH_SERVER_URL_CLIENT || !KEYCLOAK_REALM_CLIENT || !KEYCLOAK_CLIENT_ID_CLIENT || !KEYCLOAK_SECRET_CLIENT) {
       throw new HttpException('Keycloak environment variables not set up', HttpStatus.INTERNAL_SERVER_ERROR);
     }

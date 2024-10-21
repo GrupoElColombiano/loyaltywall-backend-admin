@@ -515,7 +515,7 @@ export class PlansService {
   // }
 
   async getProductsCategoriesPlan(planId: number): Promise<any> {
-
+    console.log("Executed getProducts categories")
     const result = await this.categorysAccessRepository
       .createQueryBuilder('a')
       .select([
@@ -724,7 +724,7 @@ export class PlansService {
   */
 
   async setProductCategoriesPlan(params: any): Promise<any> {
-
+    console.log("==================== setProductCategoriesPlan ====================  ", JSON.stringify(params));
     const { categories, planId, name, description, userType, idSite, productId } = params;
     let alreadyLinkedCategories: any[] = [];
     let newCategories: any[] = [];
@@ -1054,6 +1054,9 @@ export class PlansService {
   async updatePlanFinal(id: number, updatedPlan: any): Promise<any> {
     //Agregarle color red al console.log con la librería que instalé
     // console.log(color.red('updatedPlan'), updatedPlan)
+    console.log("================================================================")
+    console.log("updatedPlan: " + JSON.stringify(updatedPlan));
+    console.log("id: " + JSON.stringify(id));
     let newVersion: any;
     try {
       //Traer el plan que se va a actualizar
@@ -1086,8 +1089,10 @@ export class PlansService {
           const newPlanHistory = {
             idVersionPlan: planToUpdate.idVersionPlan,
             idPlan: planToUpdate.idPlan,
-            description: planToUpdate.description,
-            name: planToUpdate.name,
+            // description: planToUpdate.description,
+            description: updatedPlan.description,
+            // name: planToUpdate.name,
+            name: updatedPlan.name,
             userType: planToUpdate.userType,
             isActive: planToUpdate.isActive,
             createdAt: planToUpdate.createdAt,
@@ -1527,8 +1532,8 @@ export class PlansService {
       const skip = (page - 1) * limit;
       const queryBuilder = this.planRepository
         .createQueryBuilder('plan')
-        // .leftJoinAndSelect('plan.plansProductsCategory', 'plansProductsCategory')
-        // .leftJoinAndSelect('plansProductsCategory.product', 'product')
+        .leftJoinAndSelect('plan.plansProductsCategory', 'plansProductsCategory')
+        .leftJoinAndSelect('plansProductsCategory.product', 'product')
         // .leftJoinAndSelect('plansProductsCategory.sites', 'sites')
         // .leftJoinAndSelect('plansProductsCategory.categorysAccess', 'categorysAccess')
         // .leftJoinAndSelect('categorysAccess.category', 'category')
@@ -1557,7 +1562,8 @@ export class PlansService {
         }
 
         const [plans, totalPlans] = await queryBuilder.getManyAndCount();
-
+        console.log("plans", plans);
+        console.log("totalPlans", totalPlans);
         //Traer planes ligados a la tabla
         // const plansVerionados
 
@@ -1919,6 +1925,23 @@ export class PlansService {
 
     // Luego, activamos el plan con el id especificado
 
+    if (body.userType === 'Suscrito') {
+      console.log("================================================");
+      console.log("=== Suscrito === ", body);
+      // Primero, desactivamos todos los planes para userType 'anonimo'
+      var userType = body.userType;
+      // if(body.status){
+        const response = await this.planRepository.update(
+          { userType, idPlan: planId,  site: { idSite: body.idSite } },
+          { isActive: body.status },
+        );
+        console.log("=== response === ", response);
+      // }
+
+      // await this.planRepository.update(planId, { isActive: body.status });
+
+    }
+
   }
 
   // Se valida
@@ -1965,7 +1988,7 @@ export class PlansService {
       .getOne();
 
       if(subscription){
-
+        console.log(".:: subscription ::.", subscription);
         planCurrent.idVersionPlan += 1;
 
         // Actualizar idVersionPlan en la base de datos
@@ -2067,6 +2090,8 @@ export class PlansService {
 
     permissions.pages = JSON.stringify(paywallEntryCurrent);
     // Return the permissions data or whatever you need.
+    console.log("==================== permissions ============================");
+    console.log("🔥", JSON.stringify(permissions));
     return permissions;
   }
 
@@ -2076,6 +2101,9 @@ export class PlansService {
     const paywallEntryCurrent = await this.versioningModel.findOne({
       idPlan
     });
+
+    console.log("====================== paywallEntryCurrent ==========================");
+    console.log("🔥", JSON.stringify(paywallEntryCurrent));
 
     return  paywallEntryCurrent;
 

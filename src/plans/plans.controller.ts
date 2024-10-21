@@ -169,6 +169,7 @@ export class PlansController {
       @Body() params: any,
     ) {
       // return this.plansService.updatePlan(id, updatedPlanDto);
+      console.log("💊 executed product/categories - 172 💊", Date.now())
       return this.plansService.setProductCategoriesPlan(params);
     }
 
@@ -185,6 +186,7 @@ export class PlansController {
 
     ) {
       // return this.plansService.updatePlan(id, updatedPlanDto);
+      console.log("💊 executed products/categories/:planId - 189 💊", Date.now())
       return this.plansService.getProductsCategoriesPlan(planId);
     }
 
@@ -201,6 +203,7 @@ export class PlansController {
     @Body() updatedPlanDto: any,
   ) {
     // return this.plansService.updatePlan(id, updatedPlanDto);
+    console.log("======================= updatePlanFinal ====================== ")
     return this.plansService.updatePlanFinal(id, updatedPlanDto);
   }
 
@@ -332,6 +335,7 @@ export class PlansController {
     setPlanVersioning(
       @Body() body: any,
     ) {
+      console.log("💊 executed setPlanVersioning - 339 💊", Date.now())
       return this.plansService.setPlanVersioning(body);
     }
 
