@@ -101,7 +101,8 @@ export class PlansService {
           { idPlan: planExists?.idPlan },
           { isActive: plan.isActive }
         );
-      } else {
+      }
+      // } else {
 
       // Inicializar el objeto de plan editado
       const planEdited: any = {
@@ -111,6 +112,7 @@ export class PlansService {
         isActive: plan.isActive,
         site: plan.idSite ? plan.idSite : 1,
       };
+      console.log("🚀 ~ PlansService ~ create ~ planEdited: - 114 ", planEdited)
 
       // Si el userType es 'Anónimo' y isActive es true, desactivar otros planes 'Anónimos'
       if (plan.userType === 'Anónimo' && plan.isActive === true) {
@@ -133,14 +135,14 @@ export class PlansService {
       }
 
         // Guardar el nuevo plan en la base de datos
-        const newPlan = await this.planRepository.save(planEdited);
+        // const newPlan = await this.planRepository.save(planEdited);
 
         // Mapear y guardar las configuraciones de categorias, planes y productos en plansProductCategories
         if (plan.categories && plan.categories.length > 0) {
           newCategoriesPromises = plan.categories.map(async (item: any) => {
             // console.log('===>>>', item)
             const planProductCategory: any = {
-              plan: newPlan?.idPlan,
+              plan: planExists?.idPlan,
               sites: item.sites,
               product: item.idProduct,
             };
@@ -164,11 +166,11 @@ export class PlansService {
 
           });
         }
-
+        console.log("💊 plan.rates - 168 🧯", plan.rates)
         // Mapear y guardar las tarifas del plan
         const newRatesPromises = plan.rates.map(async (item: any) => {
           const newItems: any = {
-            plan: newPlan.idPlan,
+            plan: planExists.idPlan,
             time: item.time,
             rate: item.rate,
             rate_special: item.rate_special,
@@ -178,9 +180,11 @@ export class PlansService {
             is_special: item.is_special,
             date_start: item.date_start,
             date_end: item.date_end,
+            idPlan: planExists.idPlan,
           };
-
+          console.log("🧯 newItems - 183 🧯", newItems)
           const rates = await this.rateRepository.save(newItems);
+          console.log("🚀 ~ PlansService ~ newRatesPromises ~ rates: 185", rates)
           return rates;
         });
 
@@ -204,11 +208,11 @@ export class PlansService {
 
         return {
           message: 'Plan created successfully',
-          newPlan,
+          newPlan: planExists,
           newRatesPromises,
           newCategoriesPromises,
         };
-      }
+      // }
     } catch (error) {
       throw new NotFoundException(error.message);
     }
@@ -537,6 +541,8 @@ export class PlansService {
       .innerJoin('c.product', 'd')
       .where('c.idPlan = :planId', { planId })
       .getRawMany();
+
+    console.log("🔥 ::result:: 🔥", JSON.stringify(result));
 
     if (result.length === 0) {
       throw new NotFoundException(`No products found for plan ID ${planId}`);

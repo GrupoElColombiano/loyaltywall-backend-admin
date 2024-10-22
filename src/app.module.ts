@@ -41,6 +41,7 @@ import { AssetsModule } from './assets/assets.module';
 import { PuntosUsuarioModule } from './puntos_usuario/puntos_usuario.module';
 import { PaywallModule } from './paywall/paywall.module';
 import { PaymentModule } from './payment/payment.module';
+import { RatesModule } from './rates/rates.module';
 
 @Module({
   imports: [
@@ -93,6 +94,7 @@ import { PaymentModule } from './payment/payment.module';
     PuntosUsuarioModule,
     PaywallModule,
     PaymentModule,
+    RatesModule
   ],
   controllers: [AppController],
   providers: [

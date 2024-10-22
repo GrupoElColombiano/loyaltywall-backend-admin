@@ -40,6 +40,7 @@ export class PlansController {
   @ApiOperation({ summary: 'Create a new plan' }) // Add ApiOperation summary
   async createPlan(@Body() planDto: any) {
     const planWithDefaultVersion = { ...planDto, idVersionPlan: 1 };
+    console.log("🧯 creating a new plan 🧯" + planWithDefaultVersion);
     return this.plansService.create(planWithDefaultVersion);
   }
 
@@ -155,8 +156,6 @@ export class PlansController {
     return this.plansService.getPlanUser(planName, userId);
   }
 
-
-
     /**
    * Update a plan by ID.
    * @param id - Plan ID.
@@ -183,10 +182,9 @@ export class PlansController {
     @ApiOperation({ summary: 'Listar los productos con sus respectivas categorias dentro de un plan' }) // Add ApiOperation summary
     async getProductsCategoriesPlan(
       @Param('planId') planId: number,
-
     ) {
       // return this.plansService.updatePlan(id, updatedPlanDto);
-      console.log("💊 executed products/categories/:planId - 189 💊", Date.now())
+      console.log("💊 executed products/categories/:planId - 188 💊", new Date().toISOString());
       return this.plansService.getProductsCategoriesPlan(planId);
     }
 

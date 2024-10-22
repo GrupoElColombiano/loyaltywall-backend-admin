@@ -9,6 +9,9 @@ export class Rate {
   @Column({ type: 'varchar', length: 255 })
   time: string;
 
+  @Column({ type: 'int' })
+  idPlan: number;
+
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   rate: number;
 
