@@ -87,8 +87,6 @@ export class PlansService {
    */
   async create(plan: any): Promise<any> {
     let newCategoriesPromises = [];
-
-
     try {
       // Verificar si ya existe un plan con el mismo nombre
       const planExists = await this.planRepository.findOne({
@@ -102,8 +100,6 @@ export class PlansService {
           { isActive: plan.isActive }
         );
       }
-      // } else {
-
       // Inicializar el objeto de plan editado
       const planEdited: any = {
         userType: plan.userType,
@@ -134,84 +130,84 @@ export class PlansService {
           .execute();
       }
 
-        // Guardar el nuevo plan en la base de datos
-        // const newPlan = await this.planRepository.save(planEdited);
+      // Guardar el nuevo plan en la base de datos
+      // const newPlan = await this.planRepository.save(planEdited);
 
-        // Mapear y guardar las configuraciones de categorias, planes y productos en plansProductCategories
-        if (plan.categories && plan.categories.length > 0) {
-          newCategoriesPromises = plan.categories.map(async (item: any) => {
-            // console.log('===>>>', item)
-            const planProductCategory: any = {
-              plan: planExists?.idPlan,
-              sites: item.sites,
-              product: item.idProduct,
-            };
-
-            const idPlansProductCategory = await this.plansProductCategoryRepository.save(planProductCategory);
-            // console.log('===>>>', idPlansProductCategory, item);
-
-            const categorysAccess = {
-              category: item.idCategory,
-              plansProductCategory: idPlansProductCategory.idPlansProductCategory,
-              amount: item.amount,
-              unlimited: item.unlimited,
-              frequency: item.frequency,
-              typeDuration: item.typeDuration,
-              duration: item.duration,
-            }
-
-            // console.log('categorysAccess', categorysAccess);
-
-            const categorysAccessCreated = await this.categorysAccessRepository.save(categorysAccess);
-
-          });
-        }
-        console.log("💊 plan.rates - 168 🧯", plan.rates)
-        // Mapear y guardar las tarifas del plan
-        const newRatesPromises = plan.rates.map(async (item: any) => {
-          const newItems: any = {
-            plan: planExists.idPlan,
-            time: item.time,
-            rate: item.rate,
-            rate_special: item.rate_special,
-            rate_special_renewal: item.rate_special_renewal,
-            rate_renewal: item.rate_renewal,
-            duration: item.duration,
-            is_special: item.is_special,
-            date_start: item.date_start,
-            date_end: item.date_end,
-            idPlan: planExists.idPlan,
+      // Mapear y guardar las configuraciones de categorias, planes y productos en plansProductCategories
+      if (plan.categories && plan.categories.length > 0) {
+        newCategoriesPromises = plan.categories.map(async (item: any) => {
+          // console.log('===>>>', item)
+          const planProductCategory: any = {
+            plan: planExists?.idPlan,
+            sites: item.sites,
+            product: item.idProduct,
           };
-          console.log("🧯 newItems - 183 🧯", newItems)
-          const rates = await this.rateRepository.save(newItems);
-          console.log("🚀 ~ PlansService ~ newRatesPromises ~ rates: 185", rates)
-          return rates;
+
+          const idPlansProductCategory = await this.plansProductCategoryRepository.save(planProductCategory);
+          // console.log('===>>>', idPlansProductCategory, item);
+
+          const categorysAccess = {
+            category: item.idCategory,
+            plansProductCategory: idPlansProductCategory.idPlansProductCategory,
+            amount: item.amount,
+            unlimited: item.unlimited,
+            frequency: item.frequency,
+            typeDuration: item.typeDuration,
+            duration: item.duration,
+          }
+
+          // console.log('categorysAccess', categorysAccess);
+
+          const categorysAccessCreated = await this.categorysAccessRepository.save(categorysAccess);
+
         });
-
-        // Esperar a que todas las promesas se resuelvan antes de continuar
-        // await Promise.all([...newCategoriesPromises, ...newRatesPromises]);
-
-        // Crear un registro de actividad
-        const registerLog: any = {
-          userId: 123,
-          roleId: 456,
-          activityType: 'create plan',
-          description: 'User create to plan successfully.',
-          affectedObject: 'plan',
-          success: true,
-          ipAddress: '192.168.1.1',
-          userAgent: 'Mozilla/5.0',
-          timestamp: '2023-09-13T12:34:56.789Z',
+      }
+      console.log("💊 plan.rates - 168 🧯", plan.rates)
+      // Mapear y guardar las tarifas del plan
+      const newRatesPromises = plan.rates.map(async (item: any) => {
+        const newItems: any = {
+          plan: planExists.idPlan,
+          time: item.time,
+          rate: item.rate,
+          rate_special: item.rate_special,
+          rate_special_renewal: item.rate_special_renewal,
+          rate_renewal: item.rate_renewal,
+          duration: item.duration,
+          is_special: item.is_special,
+          date_start: item.date_start,
+          date_end: item.date_end,
+          idPlan: planExists.idPlan,
         };
+        console.log("🧯 newItems - 183 🧯", newItems)
+        const rates = await this.rateRepository.save(newItems);
+        console.log("🚀 ~ PlansService ~ newRatesPromises ~ rates: 185", rates)
+        return rates;
+      });
 
-        const registerLogCreated = await this.registerlogService.create(registerLog);
+      // Esperar a que todas las promesas se resuelvan antes de continuar
+      // await Promise.all([...newCategoriesPromises, ...newRatesPromises]);
 
-        return {
-          message: 'Plan created successfully',
-          newPlan: planExists,
-          newRatesPromises,
-          newCategoriesPromises,
-        };
+      // Crear un registro de actividad
+      const registerLog: any = {
+        userId: 123,
+        roleId: 456,
+        activityType: 'create plan',
+        description: 'User create to plan successfully.',
+        affectedObject: 'plan',
+        success: true,
+        ipAddress: '192.168.1.1',
+        userAgent: 'Mozilla/5.0',
+        timestamp: '2023-09-13T12:34:56.789Z',
+      };
+
+      const registerLogCreated = await this.registerlogService.create(registerLog);
+
+      return {
+        message: 'Plan created successfully',
+        newPlan: planExists,
+        newRatesPromises,
+        newCategoriesPromises,
+      };
       // }
     } catch (error) {
       throw new NotFoundException(error.message);
