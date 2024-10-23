@@ -10,7 +10,7 @@ import { RegisterlogService } from 'src/registerlog/registerlog.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { PlanVersion } from './schema/plan-version.schema';
-import { PlanVersion as Versionamiento } from '../plans/entity/plan-versions.entity';
+import { PlanVersion as Version } from '../plans/entity/plan-versions.entity';
 import { CategorysAccess } from 'src/common/entity/categorys-access.entity';
 import { UserPlan } from 'src/common/entity/user-plan.entity';
 // import { PlanHistory } from './schema/plan-history.schema'
@@ -60,7 +60,7 @@ export class PlansService {
     @InjectRepository(CategorysAccess) private readonly categorysAccessRepository: Repository<CategorysAccess>,
     //@InjectRepository(Product)
     //private readonly product: Repository<Product>,
-    @InjectRepository(Versionamiento) private readonly versionamiento: Repository<Versionamiento>,
+    @InjectRepository(Version) private readonly version: Repository<Version>,
     @InjectRepository(UserPlan) private readonly userPlanRepository: Repository<UserPlan>,
     @InjectModel(Template.name) private readonly templateModel: Model<Template>,
     @InjectRepository(PlanTemplate) private readonly planTemplateRepository: Repository<PlanTemplate>,
@@ -286,234 +286,6 @@ export class PlansService {
     };
   }
 
-  // async updatePlanFinal(id: number, updatedPlan: any): Promise<any> {
-  //   let result: any;
-  //   let newVersion: any;
-  //   console.log('id del plan', id);
-  //   try {
-  //     //Traer el plan que se va a actualizar
-  //     const planToUpdate = await this.planRepository.createQueryBuilder('plan')
-  //       .leftJoinAndSelect('plan.rates', 'rates')
-  //       // .leftJoinAndSelect('plan.site', 'site')
-  //       .leftJoinAndSelect('plan.plansProductsCategory', 'plansProductsCategory')
-  //       .leftJoinAndSelect('plansProductsCategory.product', 'product')
-  //       .leftJoinAndSelect('plansProductsCategory.sites', 'sites')
-  //       .leftJoinAndSelect('plansProductsCategory.categorysAccess', 'categorysAccess')
-  //       .leftJoinAndSelect('categorysAccess.category', 'category')
-  //       .where('plan.idPlan = :id', { id })
-  //       .getOne();
-
-  //       //Versionar el plan, si el usertype es Suscrito
-  //       console.log('Plan que debo guardar en MongoDB por fuera', planToUpdate)
-  //       if (planToUpdate.userType === 'Suscrito') {
-  //         console.log(color.green('Plan que debo guardar en MongoDB por dentro'), planToUpdate)
-  //         //Guardar plan en el schema PlanHistoryModel
-  //         const newPlanHistory = {
-  //           idVersionPlan: planToUpdate.idVersionPlan,
-  //           idPlan: planToUpdate.idPlan,
-  //           description: planToUpdate.description,
-  //           name: planToUpdate.name,
-  //           userType: planToUpdate.userType,
-  //           isActive: planToUpdate.isActive,
-  //           createdAt: planToUpdate.createdAt,
-  //           updatedAt: planToUpdate.updatedAt,
-  //           rates: planToUpdate.rates,
-  //           // site: planToUpdate.site,
-  //           plansProductsCategory: planToUpdate.plansProductsCategory,
-  //         }
-  //         // const planHistory = await this.planHistoryModel.create(newPlanHistory);
-  //         const planVersion: any = await this.versionPlanModel.create(newPlanHistory);
-  //         // console.log(color.red('planHistory'), planHistory);
-
-  //         //Guardar el _id de planHistory en una variable idVersionPlan
-  //         console.log(color.gray('planVersion'), planVersion);
-
-  //         const idVersionPlan = planVersion._id;
-
-  //         const newVersionamientoPlan: any = {
-  //           name: planToUpdate.name,
-  //           idVersionPlan: idVersionPlan,
-  //           plan: planToUpdate.idPlan,
-  //         }
-  //         const versionamientoPlan = await this.versionamiento.save(newVersionamientoPlan);
-
-  //         //Traer todos los usuarios ligados a ése plan de la tabla userPlanRepository
-  //         const userPlan = await this.userPlanRepository.createQueryBuilder('userPlan')
-  //           .leftJoinAndSelect('userPlan.plan', 'plan')
-  //           .where('plan.idPlan = :id', { id })
-  //           .getMany();
-
-  //           const idUsers = [];
-  //           for (let i = 0; i < userPlan.length; i++) {
-  //             idUsers.push(userPlan[i].idUser);
-  //           }
-
-  //           const newPlanUserHisty: any = idUsers.map(async (userId) => {
-  //             const usersId: any = {
-  //               userId: userId,
-  //               planHistoryId: idVersionPlan.toString(),
-  //             }
-
-  //            const planUserHistory = await this.planUserHistoryRepository.save(usersId);
-  //           });
-  //           newVersion = planToUpdate.idVersionPlan + 1;
-  //       }
-  //       if (!planToUpdate) {
-  //         throw new NotFoundException(`Plan with ID ${id} not found`);
-  //       }
-
-  //       //Editar los campos del plan con los valores proporcionados
-  //       // const planEditedOld: any = {
-  //       //   name: updatedPlan.name,
-  //       //   description: updatedPlan.description,
-  //       //   isActive: updatedPlan.isActive,
-  //       //   site: updatedPlan.idSite,
-  //       //   idVersionPlan: newVersion,
-  //       // };
-  //       // console.log(color.red('planEditedOld'), planEditedOld)
-
-  //     // Si el userType es 'Anónimo' y isActive es true, desactivar otros planes 'Anónimos'
-  //     // if (updatedPlan.userType === 'Anónimo' && updatedPlan.isActive === true) {
-  //     //   await this.planRepository
-  //     //     .createQueryBuilder()
-  //     //     .update(Plan)
-  //     //     .set({ isActive: false })
-  //     //     .where('userType = :userType', { userType: 'Anónimo' })
-  //     //     .execute();
-  //     // }
-
-  //     // Si el userType es 'Registrado sin pago' y isActive es true, desactivar otros planes 'Registrado sin pago'
-  //     // if (updatedPlan.userType === 'Registrado sin pago' && updatedPlan.isActive === true) {
-  //     //   await this.planRepository
-  //     //     .createQueryBuilder()
-  //     //     .update(Plan)
-  //     //     .set({ isActive: false })
-  //     //     .where('userType = :userType', { userType: 'Registrado sin pago' })
-  //     //     .execute();
-  //     // }
-  //     // console.log('Plan listo para editar', planEditedOld)
-  //     //Actualizar el plan en la base de datos
-  //     // const updatedPlanFinal = await this.planRepository.update(id, planEditedOld);
-  //     // console.log(color.green('updatedPlanFinal'), updatedPlanFinal)
-
-  //     //Logica si updatedPlan.categories tiene longitud > 0 Eliminar
-  //     // console.log(color.red('ELIMINANDO...'), updatedPlan.categories.length)
-  //     // if (updatedPlan.categories.length >= 0) {
-  //     //   // console.log(color.yellow('ELIMINANDO...'))
-
-  //     //   //Recorrer el planToUpdate.plansProductsCategory y eliminar los registros que coincidan con el id del plan, el id del producto y idSite
-  //     //   for (const plansProductCategory of planToUpdate.plansProductsCategory) {
-  //     //     // console.log(color.blue('PLAN A ACTUALIZAR'), planToUpdate.plansProductsCategory[i])
-  //     //     const { sites, product, categorysAccess } = plansProductCategory;
-  //     //     const productAsObject = product as unknown as { idProduct: number };
-  //     //     // console.log(color.yellow('sites'), sites)
-  //     //     // console.log(color.blue('product'), productAsObject.idProduct)
-  //     //     // console.log(color.red('categorysAccess'), categorysAccess)
-
-  //     //     //Capturar el idPlansProductCategory de planToUpdate.plansProductsCategory[i]
-  //     //     const idPlansProductCategory = plansProductCategory.idPlansProductCategory;
-  //     //     const idProduct: any = productAsObject.idProduct;
-  //     //     const idSite = sites.idSite;
-
-  //     //     //Recorrer el categorysAccess y eliminar los registros que coincidan con el id del idPlanProductCategory y el id del category_access
-  //     //     // console.log('no ha ingresado!!!')
-  //     //     if(categorysAccess.length > 0) {
-  //     //       for (let j = 0; j < categorysAccess.length; j++) {
-  //     //         const idCategoryAccess = categorysAccess[j].id;
-  //     //         // console.log('acá ingresó!!', idCategoryAccess)
-  //     //         const categorysAccessDelete = await this.categorysAccessRepository.createQueryBuilder('categorys_access')
-  //     //           .where('categorys_access."id" = :idCategoryAccess', { idCategoryAccess })
-  //     //           .andWhere('categorys_access."idPlansProductCategory" = :idPlansProductCategory', { idPlansProductCategory })
-  //     //           .delete()
-  //     //           .execute();
-  //     //         // console.log(color.green('categorysAccessDelete'), categorysAccessDelete)
-  //     //       }
-  //     //     }
-
-  //     //     //Eliminar los registros en plansProductCategory que coincidan con el idPlansProductCategory
-  //     //     // console.log('por acá vamos mano')
-  //     //     const deletedPlan = await this.plansProductCategoryRepository.
-  //     //       createQueryBuilder('plansProductsCategory')
-  //     //       .delete()
-  //     //       .from(PlansProductCategory)
-  //     //       .where('idPlansProductCategory = :idPlansProductCategory', { idPlansProductCategory })
-  //     //       .execute();
-
-  //     //     // console.log(color.green('deletedPlan'), deletedPlan)
-  //     //   }
-  //     // }
-
-  //     //Si updatedPlan.categories tiene longitud > 0 Insertar
-  //     // console.log('UPDATED PLAN', updatedPlan)
-  //     // if(updatedPlan.categories.length > 0) {
-  //     //   const { categories } = updatedPlan
-  //     // //  console.log(color.red('REGISTRANDO NUEVAMENTE...'), categories)
-
-  //     //   //Recorrer updatedPlan.categories y guardar los registros en plansProductCategory y categorysAccess
-  //     //   for(const category of categories) {
-  //     //     const newPlansProductCategory: any = {
-  //     //       sites: category.sites,
-  //     //       plan: id,
-  //     //       product: category.idProduct,
-  //     //     }
-
-  //     //     const savedPlansProductCategory = await this.plansProductCategoryRepository.save(newPlansProductCategory);
-
-  //     //     const categorysAccess = {
-  //     //       category: category.idCategory,
-  //     //       plansProductCategory: savedPlansProductCategory.idPlansProductCategory,
-  //     //       amount: category.amount,
-  //     //       unlimited: category.unlimited,
-  //     //       frequency: category.frequency,
-  //     //       typeDuration: category.typeDuration,
-  //     //       duration: category.duration,
-  //     //     }
-  //     //     // console.log(color.green('categorysAccess'), categorysAccess)
-  //     //     const savedCategoryAccess = await this.categorysAccessRepository.save(categorysAccess);
-  //     //     // console.log(color.green('savedCategoryAccess'), savedCategoryAccess)
-  //     //   }
-  //     // }
-
-  //     //Actualizar las tarifas del plan
-  //     // console.log(color.red('TARIFAS AFUERA'), updatedPlan)
-  //     // if(updatedPlan.rates.length > 0) {
-  //     //   //Eliminar todos los rates del plan, y crearlos nuevamente
-  //     //   const deletedRates = await this.rateRepository.createQueryBuilder('rates')
-  //     //     .delete()
-  //     //     .from(Rate)
-  //     //     .where('idPlan = :id', { id })
-  //     //     .execute();
-  //     //     // console.log(color.green('deletedRates'), deletedRates.affected)
-
-  //     //     //Crear los rates nuevamente
-  //     //     for(const rate of updatedPlan.rates) {
-  //     //       const newRate: any = {
-  //     //         time: rate.time,
-  //     //         rate: rate.rate,
-  //     //         rate_special: rate.rate_special,
-  //     //         rate_special_renewal: rate.rate_special_renewal,
-  //     //         rate_renewal: rate.rate_renewal,
-  //     //         duration: rate.duration,
-  //     //         is_special: rate.is_special,
-  //     //         date_start: rate.date_start,
-  //     //         date_end: rate.date_end,
-  //     //         plan: id,
-  //     //       }
-  //     //       // console.log(color.red('newRate'), newRate)
-
-  //     //       const savedRate = await this.rateRepository.save(newRate);
-  //     //       // console.log(color.gray('savedRate'), savedRate)
-  //     //     }
-  //     // }
-  //     return {
-  //       message: 'Plan updated successfully',
-  //       planToUpdate,
-  //     };
-  //   } catch {
-  //     // throw new
-  //   }
-  // }
-
   async getProductsCategoriesPlan(planId: number): Promise<any> {
     console.log("Executed getProducts categories")
     const result = await this.categorysAccessRepository
@@ -581,149 +353,6 @@ export class PlansService {
     return groupedResults;
 
   }
-
-  /*
-  async setProductCategoriesPlan(params: any): Promise<any> {
-
-    const { categories, planId, name, description, userType, idSite, productId } = params;
-    let alreadyLinkedCategories: any[] = [];
-    let newCategories: any[] = [];
-
-    // Ejecutar las operaciones dentro de una transacción
-    return this.dataSource.transaction(async manager => {
-      try {
-
-        console.log(" ESTADO DEL ID DEL PLAN ACTUALMENTE ", planId);
-        // Verificar si ya existe un plan con el mismo nombre
-        if (!planId) {
-          const existingPlan = await manager.findOne(Plan, { where: { name } });
-          if (existingPlan) {
-            throw new Error('El nombre del plan ya está en uso');
-          }
-        }
-
-        // Crear y guardar el registro en PlansProductCategory
-        const site = await manager.findOne(Site, { where: { idSite: idSite } });
-
-        if (!site) {
-          throw new Error('Site not found');
-        }
-
-        let plan: Plan;
-
-        if (!planId) {
-          // Crear un nuevo plan si planId es nulo
-          const newPlan = new Plan();
-          newPlan.name = name;
-          newPlan.description = description;
-          newPlan.isActive = false;  // O cualquier otro valor predeterminado
-          newPlan.userType = userType;  // Agregar userType u otros parámetros adicionales aquí
-          newPlan.site = idSite;
-
-          plan = await manager.save(newPlan);
-        } else {
-          // Buscar el plan existente
-          plan = await manager.findOne(Plan, { where: { idPlan: planId } });
-
-          if (!plan) {
-            throw new Error('plan not found');
-          }
-        }
-
-
-
-        if (planId) {
-          // Obtener los idPlansProductCategory del plan solo si planId no es nulo
-          const plansProductCategories = await manager.find(PlansProductCategory, {
-            where: {
-              plan: { idPlan: planId },
-              product: { idProduct: productId },
-            },
-            relations: ['plan', 'product'],
-          });
-
-          const idsPlansProductCategory = plansProductCategories.map(p => p.idPlansProductCategory);
-
-          // Obtener los categorys_access para estos idsPlansProductCategory
-          const existingCategoriesAccess = await manager.find(CategorysAccess, {
-            where: { plansProductCategory: In(idsPlansProductCategory) },
-            relations: ['category', 'plansProductCategory'],
-          });
-
-          const existingCategories = existingCategoriesAccess.map(ca => ca.category.idCategory);
-
-          console.log("5))) Lista de existingCategories::: ", existingCategories);
-
-          console.log(" categories:::: ", categories);
-          // Verificar si las categorías ya están registradas
-          for (const category of categories) {
-            const categoryId = Number(category.category); // Convertir a número
-            const matchingCategoryAccess = existingCategoriesAccess.find(ca => ca.category.idCategory === categoryId);
-
-            if (matchingCategoryAccess) {
-              alreadyLinkedCategories.push(matchingCategoryAccess);
-            } else {
-              newCategories.push(category);
-            }
-          }
-        } else {
-          newCategories = categories;
-        }
-
-        // Guardar las nuevas categorías
-        for (const category of newCategories) {
-          const newPlansProductCategory: any = {
-            sites: site,
-            plan: plan,
-            product: productId,
-          };
-
-          const savedPlansProductCategory = await manager.save(PlansProductCategory, newPlansProductCategory);
-
-          const categorysAccess = {
-            category: category.category,
-            plansProductCategory: savedPlansProductCategory.idPlansProductCategory,
-            amount: category.amount,
-            unlimited: category.limited,
-            frequency: '',
-            typeDuration: '',
-            duration: category.duration,
-          };
-
-          const savedCategoryAccess = await manager.save(CategorysAccess, categorysAccess);
-
-        }
-
-        return {
-          message: 'Operación completada',
-          alreadyLinkedCategories,
-          planId: planId,
-        };
-      } catch (error) {
-        console.log(" EL ERROR ACTUALLL ", error)
-        return { message: error.message };
-      }
-    }).then(result => {
-      console.log(" 1) EJECUTADA TODA ", result)
-      console.log(" 2) EJECUTADA TODA::: planId ", planId);
-
-
-      this.setPlanVersioning({idPlan: planId, alreadyLinkedCategories:alreadyLinkedCategories});
-
-
-
-      return {
-        message: 'Operación completada',
-        alreadyLinkedCategories,
-        planId: planId,
-      };
-    });
-
-
-
-  }
-
-  */
 
   async setProductCategoriesPlan(params: any): Promise<any> {
     console.log("==================== setProductCategoriesPlan ====================  ", JSON.stringify(params));
@@ -860,103 +489,6 @@ export class PlansService {
     });
   }
 
-
-  /*async setProductCategoriesPlan(params: any): Promise<any> {
-    const { categories } = params;
-    console.log("AQII LLEGANDO LOS PARAEMTROS :::", params);
-
-    // Crear y guardar el registro en PlansProductCategory
-    const site = await this.siteRpo.findOne({ where: { idSite: params.idSite } });
-
-    if (!site) {
-        throw new Error('Site not found');
-    }
-
-    const plan = await this.planRepository.findOne({ where: { idPlan: params.planId } });
-
-    if (!plan) {
-        throw new Error('plan not found');
-    }
-
-    console.log(" 1))) plan::: ", { plan: plan, product: params.productId });
-    // Obtener los idPlansProductCategory del plan
-    const plansProductCategories = await this.plansProductCategoryRepository.find({
-      where: {
-          plan: { idPlan: params.planId },
-          product: { idProduct: params.productId }
-      },
-      relations: ['plan', 'product']
-    });
-
-
-    console.log("2))) Lista de plansProductCategories::: ", plansProductCategories)
-
-    const idsPlansProductCategory = plansProductCategories.map(p => p.idPlansProductCategory);
-
-    console.log(" 3) idsPlansProductCategory::: ", idsPlansProductCategory)
-    // Obtener los categorys_access para estos idsPlansProductCategory
-    const existingCategoriesAccess = await this.categorysAccessRepository.find({
-        where: { plansProductCategory: In(idsPlansProductCategory) },
-        relations: ['category', 'plansProductCategory']
-    });
-
-    console.log("4))) Lista de existingCategoriesAccess::: ", existingCategoriesAccess)
-
-
-    const existingCategories = existingCategoriesAccess.map(ca => ca.category.idCategory);
-
-    console.log("5))) Lista de existingCategories::: ", existingCategories)
-
-    const alreadyLinkedCategories: any[] = [];
-    const newCategories: any[] = [];
-
-    console.log(" categories:::: ", categories);
-    // Verificar si las categorías ya están registradas
-    for (const category of categories) {
-
-      const categoryId = Number(category.category); // Convertir a número
-      const matchingCategoryAccess = existingCategoriesAccess.find(ca => ca.category.idCategory === categoryId);
-
-      if (matchingCategoryAccess) {
-          alreadyLinkedCategories.push(matchingCategoryAccess);
-      } else {
-          newCategories.push(category);
-      }
-   }
-
-
-    // Guardar las nuevas categorías
-    for (const category of newCategories) {
-        const newPlansProductCategory: any = {
-            sites: site,
-            plan: plan,
-            product: params.productId,
-        };
-
-        const savedPlansProductCategory = await this.plansProductCategoryRepository.save(newPlansProductCategory);
-
-        const categorysAccess = {
-            category: category.category,
-            plansProductCategory: savedPlansProductCategory.idPlansProductCategory,
-            amount: category.amount,
-            unlimited: category.limited,
-            frequency: '',
-            typeDuration: '',
-            duration: category.duration,
-        };
-
-        const savedCategoryAccess = await this.categorysAccessRepository.save(categorysAccess);
-        console.log('savedCategoryAccess::: >>>> ', savedCategoryAccess);
-    }
-
-    console.log("PARAMETROS PARA REGISTRAR UN PRODUCTO Y SU RESPECTIVAS CATEGORIAS ", categories);
-
-    return {
-        message: 'Operación completada',
-        alreadyLinkedCategories
-    };
-  }*/
-
   async deleteCategory(planId: number, idPlansProductCategory: number): Promise<void> {
 
     console.log("==== deleteCategory ==== ", planId);
@@ -1004,59 +536,9 @@ export class PlansService {
     await this.setPlanVersioning({idPlan: idPlan, alreadyLinkedCategories:[]});
   }
 
-  /*async setProductCategoriesPlan(params: any): Promise<any> {
-
-    //if(updatedPlan.categories.length > 0) {
-      const { categories } = params
-      console.log("AQII LLEGANDO LOS PARAEMTROS :::", categories)
-
-          // Crear y guardar el registro en PlansProductCategory
-      const site = await this.siteRpo.findOne({ where: { idSite: params.idSite } });
-
-      if (!site) {
-        throw new Error('Site not found');
-      }
-
-
-      const plan = await this.planRepository.findOne({ where: { idPlan: params.planId } });
-
-      if (!plan) {
-        throw new Error('plan not found');
-      }
-
-
-      //Recorrer updatedPlan.categories y guardar los registros en plansProductCategory y categorysAccess
-      for(const category of categories) {
-        const newPlansProductCategory: any = {
-          sites: site,
-          plan: plan,
-          product: params.productId,
-        }
-
-        const savedPlansProductCategory = await this.plansProductCategoryRepository.save(newPlansProductCategory);
-
-
-        const categorysAccess = {
-          category: category.category,
-          plansProductCategory: savedPlansProductCategory.idPlansProductCategory,
-          amount: category.amount,
-          unlimited: category.limited,
-          frequency: '',
-          typeDuration: '',
-          duration: category.duration,
-        }
-        // console.log(color.green('categorysAccess'), categorysAccess)
-        const savedCategoryAccess = await this.categorysAccessRepository.save(categorysAccess);
-      }
-    //}
-    console.log(" PARAMETROS PARA REGISTRAR UN PRODUCTO Y SU RESPECTIVAS CATEGORIAS ", params)
-
-  }*/
-
   async updatePlanFinal(id: number, updatedPlan: any): Promise<any> {
     //Agregarle color red al console.log con la librería que instalé
     // console.log(color.red('updatedPlan'), updatedPlan)
-    console.log("================================================================")
     console.log("updatedPlan: " + JSON.stringify(updatedPlan));
     console.log("id: " + JSON.stringify(id));
     let newVersion: any;
@@ -1091,10 +573,8 @@ export class PlansService {
           const newPlanHistory = {
             idVersionPlan: planToUpdate.idVersionPlan,
             idPlan: planToUpdate.idPlan,
-            // description: planToUpdate.description,
-            description: updatedPlan.description,
-            // name: planToUpdate.name,
-            name: updatedPlan.name,
+            description: planToUpdate.description,
+            name: planToUpdate.name,
             userType: planToUpdate.userType,
             isActive: planToUpdate.isActive,
             createdAt: planToUpdate.createdAt,
@@ -1105,25 +585,31 @@ export class PlansService {
           }
           // const planHistory = await this.planHistoryModel.create(newPlanHistory);
           const planVersion: any = await this.versionPlanModel.create(newPlanHistory);
+          // await this.versionPlanModel.create(newPlanHistory);
           // console.log(color.red('planHistory'), planHistory);
 
           //Guardar el _id de planHistory en una variable idVersionPlan
-          console.log(color.gray('planVersion'), planVersion);
+          // console.log(color.gray('planVersion'), planVersion);
 
           const idVersionPlan = planVersion._id.toString();
 
-          const newVersionamientoPlan: any = {
+          const newVersionPlan: any = {
             name: planToUpdate.name,
             idVersionPlan: idVersionPlan,
             plan: planToUpdate.idPlan,
           }
-          const versionamientoPlan = await this.versionamiento.save(newVersionamientoPlan);
+          // const versionPlan = await this.version.save(newVersionPlan);
+          
+          // console.log(color.yellow("🚀 ~ updatePlanFinal ~ versionPlan:"), versionPlan)
 
           //Traer todos los usuarios ligados a ése plan de la tabla userPlanRepository
           const userPlan = await this.userPlanRepository.createQueryBuilder('userPlan')
             .leftJoinAndSelect('userPlan.plan', 'plan')
             .where('plan.idPlan = :id', { id })
             .getMany();
+          console.log(color.yellow("userPlan"), userPlan);
+          if(userPlan.length > 0) {
+            this.setPlanVersioning({ idPlan: id });
 
             const idUsers = [];
             for (let i = 0; i < userPlan.length; i++) {
@@ -1135,14 +621,15 @@ export class PlansService {
                 userId: userId,
                 planHistoryId: idVersionPlan.toString(),
               }
-
-             const planUserHistory = await this.planUserHistoryRepository.save(usersId);
+  
+              await this.planUserHistoryRepository.save(usersId);
+              
             });
-            console.log('mirar la versión a aumentar', planToUpdate);
+            console.log(color.yellow("🚀 ~ constnewPlanUserHisty:any=idUsers.map ~ newPlanUserHisty:"), newPlanUserHisty)
             newVersion = planToUpdate.idVersionPlan + 1;
+          }
         }
         //Editar los campos del plan con los valores proporcionados
-        console.log('Plan que debo editar y guardar de nuevo en plan', newVersion);
         const planEditedOld: any = {
           name: updatedPlan.name,
           description: updatedPlan.description,
@@ -1150,7 +637,6 @@ export class PlansService {
           site: updatedPlan.idSite,
           idVersionPlan: newVersion,
         };
-        // console.log(color.red('planEditedOld'), planEditedOld)
 
       // Si el userType es 'Anónimo' y isActive es true, desactivar otros planes 'Anónimos'
       if (updatedPlan.userType === 'Anónimo' && updatedPlan.isActive === true) {
@@ -1174,7 +660,40 @@ export class PlansService {
       // console.log('Plan listo para editar', planEditedOld)
       //Actualizar el plan en la base de datos
       const updatedPlanFinal = await this.planRepository.update(id, planEditedOld);
-      // console.log(color.green('updatedPlanFinal'), updatedPlanFinal)
+      console.log(color.yellow('updatedPlanFinal'), updatedPlanFinal)
+
+      //Actualizar las tarifas del plan
+      // console.log(color.red('TARIFAS AFUERA'), updatedPlan)
+      if(updatedPlan.rates.length > 0) {
+        //Eliminar todos los rates del plan, y crearlos nuevamente
+        const deletedRates = await this.rateRepository.createQueryBuilder('rates')
+          .delete()
+          .from(Rate)
+          .where('idPlan = :id', { id })
+          .execute();
+        console.log(color.yellow('deletedRates'), deletedRates)
+
+          //Crear los rates nuevamente
+          for(const rate of updatedPlan.rates) {
+            const newRate: any = {
+              time: rate.time,
+              rate: rate.rate,
+              rate_special: rate.rate_special,
+              rate_special_renewal: rate.rate_special_renewal,
+              rate_renewal: rate.rate_renewal,
+              duration: rate.duration,
+              is_special: rate.is_special,
+              date_start: rate.date_start,
+              date_end: rate.date_end,
+              plan: id,
+              idPlan: id
+            }
+            console.log(color.red('newRate'), newRate)
+
+            const savedRate = await this.rateRepository.save(newRate);
+            console.log(color.yellow('savedRate'), savedRate)
+          }
+      }
 
       //Logica si updatedPlan.categories tiene longitud > 0 Eliminar
       // console.log(color.red('ELIMINANDO...'), updatedPlan.categories.length)
@@ -1254,37 +773,7 @@ export class PlansService {
         }
       }
 
-      //Actualizar las tarifas del plan
-      // console.log(color.red('TARIFAS AFUERA'), updatedPlan)
-      if(updatedPlan.rates.length > 0) {
-        //Eliminar todos los rates del plan, y crearlos nuevamente
-        const deletedRates = await this.rateRepository.createQueryBuilder('rates')
-          .delete()
-          .from(Rate)
-          .where('idPlan = :id', { id })
-          .execute();
-          // console.log(color.green('deletedRates'), deletedRates.affected)
-
-          //Crear los rates nuevamente
-          for(const rate of updatedPlan.rates) {
-            const newRate: any = {
-              time: rate.time,
-              rate: rate.rate,
-              rate_special: rate.rate_special,
-              rate_special_renewal: rate.rate_special_renewal,
-              rate_renewal: rate.rate_renewal,
-              duration: rate.duration,
-              is_special: rate.is_special,
-              date_start: rate.date_start,
-              date_end: rate.date_end,
-              plan: id,
-            }
-            // console.log(color.red('newRate'), newRate)
-
-            const savedRate = await this.rateRepository.save(newRate);
-            // console.log(color.gray('savedRate'), savedRate)
-          }
-      }
+      
       return {
         message: 'Plan updated successfully',
       };
@@ -1760,7 +1249,7 @@ export class PlansService {
 
   async getVersionsPlan(idPlan: number): Promise<any> {
     try {
-      const queryBuilder = this.versionamiento.createQueryBuilder('versionamiento')
+      const queryBuilder = this.version.createQueryBuilder('version')
         .where('versionamiento.plan = :idPlan', { idPlan: idPlan })
         .getMany();
 
@@ -2072,7 +1561,7 @@ export class PlansService {
       if (paywallEntryCurrentMeta.length == 0) {
 
         paywallEntry.versionPlan = String(versionPlan)
-        paywallEntry.versioningData.push(planCurrent); // Convert to PlanDocument
+        paywallEntry.versioningData.push({ ...planCurrent, createdAt: new Date() }); // Convert to PlanDocument
         await paywallEntry.save();
 
       } else {
