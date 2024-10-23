@@ -92,9 +92,11 @@ export class PlansService {
       const planExists = await this.planRepository.findOne({
         where: { name: plan.name, idSite: plan.id},
       });
+      console.log("🚀 ~ PlansService ~ create ~ planExists:", planExists)
 
       //Verifica si el plan existe y si se requiere activar el plan
       if (planExists && planExists?.isActive !== plan.isActive) {
+        console.log("|||||||||||||");
         await this.planRepository.update(
           { idPlan: planExists?.idPlan },
           { isActive: plan.isActive }
@@ -109,25 +111,28 @@ export class PlansService {
         site: plan.idSite ? plan.idSite : 1,
       };
       console.log("🚀 ~ PlansService ~ create ~ planEdited: - 114 ", planEdited)
-
       // Si el userType es 'Anónimo' y isActive es true, desactivar otros planes 'Anónimos'
       if (plan.userType === 'Anónimo' && plan.isActive === true) {
-        await this.planRepository
+        const response = await this.planRepository
           .createQueryBuilder()
           .update(Plan)
           .set({ isActive: false })
           .where('userType = :userType', { userType: 'Anónimo' })
+          .andWhere('idPlan != :idPlan', { idPlan: planExists?.idPlan || '' })
           .execute();
+        console.log(":: response - 124 ::", response);
       }
 
       // Si el userType es 'Registrado sin pago' y isActive es true, desactivar otros planes 'Registrado sin pago'
       if (plan.userType === 'Registrado sin pago' && plan.isActive === true) {
-        await this.planRepository
+        const response = await this.planRepository
           .createQueryBuilder()
           .update(Plan)
           .set({ isActive: false })
           .where('userType = :userType', { userType: 'Registrado sin pago' })
+          .andWhere('idPlan != :idPlan', { idPlan: planExists?.idPlan || '' })
           .execute();
+        console.log(":: response - 135 ::", response);
       }
 
       // Guardar el nuevo plan en la base de datos
@@ -1053,8 +1058,6 @@ export class PlansService {
         }
 
         const [plans, totalPlans] = await queryBuilder.getManyAndCount();
-        console.log("plans", plans);
-        console.log("totalPlans", totalPlans);
         //Traer planes ligados a la tabla
         // const plansVerionados
 
