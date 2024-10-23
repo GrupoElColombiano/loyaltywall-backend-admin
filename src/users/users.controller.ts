@@ -4,6 +4,7 @@ import { CreateUserAdminDto } from './dto/create-user.dto';
 //Documentation
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { UsersService } from './users.service';
+import { ConfigService } from '@nestjs/config';
 import { Public, Unprotected } from 'nest-keycloak-connect';
 import axios from 'axios';
 
@@ -11,7 +12,21 @@ import axios from 'axios';
 @Controller('users')
 @Unprotected()
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  private authServerUrl: string;
+  private realm: string;
+  private clientIdNumber: string;
+  private clientId: string;
+  private clientSecret: string;
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly configService: ConfigService
+  ) {
+    this.authServerUrl = this.configService.get('KEYCLOAK_AUTH_SERVER_URL');
+    this.realm = this.configService.get('KEYCLOAK_OUTSIDE_REALM');
+    this.clientIdNumber = this.configService.get('KEYCLOAK_OUTSIDE_CLIENT_ID_NUMBER');
+    this.clientId = this.configService.get('KEYCLOAK_OUTSIDE_CLIENT_ID');
+    this.clientSecret = this.configService.get('KEYCLOAK_OUTSIDE_SECRET');
+  }
 
   @Post('create')
   @Public()
@@ -37,20 +52,20 @@ export class UsersController {
   @Post('authenticate')
   async authenticate(@Body() body: { username: string, password: string }) {
     const { username, password } = body;
-    const { KEYCLOAK_AUTH_SERVER_URL_CLIENT, KEYCLOAK_REALM_CLIENT, KEYCLOAK_CLIENT_ID_CLIENT, KEYCLOAK_SECRET_CLIENT } = process.env;
+  
 
-    if (!KEYCLOAK_AUTH_SERVER_URL_CLIENT || !KEYCLOAK_REALM_CLIENT || !KEYCLOAK_CLIENT_ID_CLIENT || !KEYCLOAK_SECRET_CLIENT) {
+    if (!this.authServerUrl || !this.realm || !this.clientIdNumber || !this.clientId || !this.clientSecret) {
       throw new HttpException('Keycloak environment variables not set up', HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    const tokenUrl = `${KEYCLOAK_AUTH_SERVER_URL_CLIENT}/realms/${KEYCLOAK_REALM_CLIENT}/protocol/openid-connect/token`;
+    const tokenUrl = `${this.authServerUrl}/realms/${this.realm}/protocol/openid-connect/token`;
 
     const formData = new URLSearchParams();
-    formData.append('grant_type', 'password');
-    formData.append('client_id', KEYCLOAK_CLIENT_ID_CLIENT);
-    formData.append('client_secret', KEYCLOAK_SECRET_CLIENT);
-    formData.append('username', username);
-    formData.append('password', password);
+    formData.append('grant_type', 'client_credentials');
+    formData.append('client_id', this.clientId);
+    formData.append('client_secret', this.clientSecret);
+    // formData.append('username', username);
+    // formData.append('password', password);
 
     console.log(" EL TOKEN ", tokenUrl);
     try {
