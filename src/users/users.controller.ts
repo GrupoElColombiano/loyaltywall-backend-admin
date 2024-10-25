@@ -61,11 +61,7 @@ export class UsersController {
     if (!this.authServerUrl || !this.realm || !this.clientIdNumber || !this.clientId || !this.clientSecret) {
       throw new HttpException('Keycloak environment variables not set up', HttpStatus.INTERNAL_SERVER_ERROR);
     }
-    console.log("Previous :::", {
-      "this.authServerUrl": this.authServerUrl,
-      "this.clientId": this.clientId,
-      "this.clientSecret": this.clientSecret
-    });
+    
     const tokenUrl = `${this.authServerUrl}/realms/${this.realm}/protocol/openid-connect/token`;
 
     const formData = new URLSearchParams();
@@ -75,10 +71,6 @@ export class UsersController {
 
     console.log(":: formData ::", JSON.stringify(formData));
     console.log(" EL TOKEN ", tokenUrl);
-
-    const getData1 = formData.getAll("grant_type");
-    const getData2 = formData.getAll("client_id");
-    const getData3 = formData.getAll("client_secret");
     
     try {
 
@@ -91,8 +83,10 @@ export class UsersController {
       }
       )
       const getData = await response.json();
+      console.log("🚀 ~ UsersController ~ authenticate ~ getData: 🚀", getData);
       return getData;
     } catch (error) {
+      console.log("❌ Error fetching token ❌", error);
       throw new HttpException(error.response.data, error.response.status);
     }
   }
