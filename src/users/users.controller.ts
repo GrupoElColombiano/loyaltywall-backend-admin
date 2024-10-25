@@ -50,33 +50,48 @@ export class UsersController {
   }
 
   @Post('authenticate')
-  async authenticate(@Body() body: { username: string, password: string }) {
-    const { username, password } = body;
-  
+  async authenticate() {
+
+    console.log("this.authServerUrl::::", this.authServerUrl);
+    console.log("this.realm::::", this.realm);
+    console.log("this.clientIdNumber::::", this.clientIdNumber);
+    console.log("this.clientId::::", this.clientId);
+    console.log("this.clientSecret::::", this.clientSecret);
 
     if (!this.authServerUrl || !this.realm || !this.clientIdNumber || !this.clientId || !this.clientSecret) {
       throw new HttpException('Keycloak environment variables not set up', HttpStatus.INTERNAL_SERVER_ERROR);
     }
-
+    console.log("Previous :::", {
+      "this.authServerUrl": this.authServerUrl,
+      "this.clientId": this.clientId,
+      "this.clientSecret": this.clientSecret
+    });
     const tokenUrl = `${this.authServerUrl}/realms/${this.realm}/protocol/openid-connect/token`;
 
     const formData = new URLSearchParams();
     formData.append('grant_type', 'client_credentials');
     formData.append('client_id', this.clientId);
     formData.append('client_secret', this.clientSecret);
-    // formData.append('username', username);
-    // formData.append('password', password);
 
+    console.log(":: formData ::", JSON.stringify(formData));
     console.log(" EL TOKEN ", tokenUrl);
+
+    const getData1 = formData.getAll("grant_type");
+    const getData2 = formData.getAll("client_id");
+    const getData3 = formData.getAll("client_secret");
+    
     try {
-      const response = await axios.post(tokenUrl, formData, {
+
+      const response = await fetch(tokenUrl, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
-        }
-      });  
-      
-
-      return response.data;
+        },
+        body: formData
+      }
+      )
+      const getData = await response.json();
+      return getData;
     } catch (error) {
       throw new HttpException(error.response.data, error.response.status);
     }
