@@ -116,36 +116,41 @@ export class KeycloakService {
         role,
         search,
         enabled,
-        first: (firstPage - 1) * maxLimit, // Calcula el índice del primer elemento a recuperar.
-        max: maxLimit, // Establece el número máximo de elementos por página.
+        first: `${(firstPage - 1) * maxLimit}`, // Calcula el índice del primer elemento a recuperar.
+        max: `${maxLimit}`, // Establece el número máximo de elementos por página.
       };
 
-      // Primera llamada para obtener el total de usuarios
-      const totalResponse = await firstValueFrom(
-        this.httpService.get(baseUrl, {
+      const queryString = new URLSearchParams(queryParams).toString();
+
+      const fullURL = `${baseUrl}?${queryString}`
+
+      console.log({ queryParams });
+      console.log("🚀 ~ fullURL:", fullURL)
+      const fetchPaginated = await fetch(
+        fullURL, {
+          method: 'GET',
           headers: headersRequest,
-        })
+        }
       );
-
-      const totalUsers = totalResponse.data.length;
-
+      console.log({ fetchPaginated });
+      const paginatedResponse = await fetchPaginated.json();
+      const totalUsers = paginatedResponse.length;
       console.log(" totalUsers ", totalUsers)
-      // Segunda llamada para obtener los usuarios paginados
-      const paginatedResponse = await firstValueFrom(
-        this.httpService.get(baseUrl, {
-          headers: headersRequest,
-          params: queryParams,
-        })
-      );
 
-      if (paginatedResponse.status === 200) {
+      console.log("🚀 ~ KeycloakService ~ paginatedResponse:", paginatedResponse)
+
+      const dataMapper = paginatedResponse?.map(profile => {
+        const firstName = `${profile?.firstName} ${profile?.lastName}`;
+        return { firstName, email: profile?.email }
+      })
+      if (fetchPaginated.status === 200) {
         return {
           status: 200,
           message: 'Users found',
           total: totalUsers,
-          totalUsers: totalResponse.data.length,
-          totalUsersToday: 19,
-          data: paginatedResponse.data,
+          totalUsers: totalUsers,
+          totalUsersToday: totalUsers,
+          data: dataMapper,
         };
       } else if (paginatedResponse.status === 404) {
         throw new NotFoundException('User not found');
