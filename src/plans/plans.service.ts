@@ -38,6 +38,7 @@ import { PlanVersion as PplanVersion, PlanVerDocument } from '../paywall/entitie
 import { Versioning } from '../paywall/entities/versioning.schema';
 import { UserPlans, UserPlansDocument } from 'src/paywall/entities/user-plans.schema';
 import { PlanData, PlanDataDocument, Product } from 'src/paywall/entities/plan-data.schema';
+import { Plan as PlanMongo } from 'src/paywall/entities/plan.schema';
 
 /*import {
   PaywallData,
@@ -56,6 +57,7 @@ export class PlansService {
     @InjectRepository(Rate) private readonly rateRepository: Repository<Rate>,
     private readonly registerlogService: RegisterlogService,
     @InjectModel(PlanVersion.name) private readonly versionPlanModel: Model<PlanVersion>,
+    @InjectModel(PlanMongo.name) private readonly planModel: Model<PlanMongo>,
     @InjectModel(PlanHistory.name) private readonly planHistoryModel: Model<PlanHistory>,
     @InjectRepository(CategorysAccess) private readonly categorysAccessRepository: Repository<CategorysAccess>,
     //@InjectRepository(Product)
@@ -137,7 +139,6 @@ export class PlansService {
 
       // Guardar el nuevo plan en la base de datos
       // const newPlan = await this.planRepository.save(planEdited);
-
       // Mapear y guardar las configuraciones de categorias, planes y productos en plansProductCategories
       if (plan.categories && plan.categories.length > 0) {
         newCategoriesPromises = plan.categories.map(async (item: any) => {
@@ -364,7 +365,7 @@ export class PlansService {
     const { categories, planId, name, description, userType, idSite, productId } = params;
     let alreadyLinkedCategories: any[] = [];
     let newCategories: any[] = [];
-
+    let planMongo: any;
     // Ejecutar las operaciones dentro de una transacción
     return this.dataSource.transaction(async manager => {
       try {
@@ -386,6 +387,7 @@ export class PlansService {
         }
 
         let plan: Plan;
+        
 
         if (!planId) {
           // Crear un nuevo plan si planId es nulo
@@ -398,6 +400,17 @@ export class PlansService {
           newPlan.idSite = idSite;
 
           plan = await manager.save(newPlan);
+
+          const newPlanMongo = {
+            nameSite: site.name,
+            usertype: userType,
+            plansProductsCategory: [],
+            planId: plan.idPlan
+          }
+          console.log({ newPlanMongo });
+          planMongo = await this.planModel.create(newPlanMongo);
+          console.log("🚀 ~ updatePlanFinal ~ plan:", JSON.stringify(planMongo));
+
         } else {
           // Buscar el plan existente
           plan = await manager.findOne(Plan, { where: { idPlan: planId } });
@@ -410,9 +423,11 @@ export class PlansService {
         // Obtener el id del plan
         const newPlanId = planId ? planId : plan.idPlan;
 
+        let plansProductCategories;
+
         if (planId) {
           // Obtener los idPlansProductCategory del plan solo si planId no es nulo
-          const plansProductCategories = await manager.find(PlansProductCategory, {
+          plansProductCategories = await manager.find(PlansProductCategory, {
             where: {
               plan: { idPlan: planId },
               product: { idProduct: productId },
@@ -470,7 +485,7 @@ export class PlansService {
 
           const savedCategoryAccess = await manager.save(CategorysAccess, categorysAccess);
         }
-
+        console.log("🚀 ~ setProductCategoriesPlan ~ plansProductCategories:", plansProductCategories)
         return {
           message: 'Operación completada',
           alreadyLinkedCategories,
@@ -484,7 +499,7 @@ export class PlansService {
       console.log(" 1) EJECUTADA TODA ", result)
       console.log(" 2) EJECUTADA TODA::: planId ", result.planId);
 
-      this.setPlanVersioning({ idPlan: result.planId, alreadyLinkedCategories: alreadyLinkedCategories });
+      this.setPlanVersioning({ idPlan: result.planId, alreadyLinkedCategories: alreadyLinkedCategories, planMongo });
 
       return {
         message: 'Operación completada',
@@ -1449,7 +1464,7 @@ export class PlansService {
   async setPlanVersioning(body: any): Promise<Plan | any> {
 
     console.log(" ==== setPlanVersioning:::  body ", body);
-    const { idPlan, alreadyLinkedCategories } = body;
+    const { idPlan, alreadyLinkedCategories, planMongo } = body;
 
     try {
       let planQueryBuilder = await this.planRepository
@@ -1497,6 +1512,15 @@ export class PlansService {
       this.setPlanVersioningMongo(planCurrent, idPlan, planCurrent.idVersionPlan);
 
       console.log(" LLEGANDO AQUI OK ")
+
+      //Update plan in MongoDB
+      if (planMongo) {
+        const findPlanRecordInMongo = await this.planModel.updateOne(
+          { planId: planMongo?.planId },
+          { plansProductsCategory: planCurrent?.plansProductsCategory }
+        )
+        console.log("🚀 ~ setPlanVersioning ~ findPlanRecordInMongo:", findPlanRecordInMongo)
+      }
       /*return {
         message: 'Plan retrieved successfully.',
         idPlan,

@@ -9,6 +9,9 @@ export type PlanDocument = Document & Plan;
 @Schema()
 export class Plan {
   @Prop()
+  planId: string;
+  
+  @Prop()
   nameSite: string;
 
   @Prop()
