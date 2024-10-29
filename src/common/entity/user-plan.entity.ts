@@ -22,6 +22,9 @@ export class UserPlan {
   @Column({ nullable: true, name: 'id_version'})
   idVersion: string;
 
+  @Column({ nullable: true, name: 'id_plan'})
+  idPlan: string;
+
   @ManyToOne(() => Plan) // Establece la relación Muchos a Uno con la entidad Plan
   @JoinColumn({ name: 'id_plan' }) // Especifica la columna en la que se basa la relación
   plan: Plan; // Crea un campo para acceder al objeto relacionado Plan

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePaywallDto } from './dto/create-paywall.dto';
 import { UpdatePaywallDto } from './dto/update-paywall.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -11,6 +11,7 @@ import { Site } from 'src/common/entity/site.entity';
 import { PointsEvents } from 'src/common/entity/points-events.entity';
 import { EntityManager, EntityRepository, Repository } from 'typeorm';
 import { EventsPointsSite } from 'src/common/entity/events-points-site.entity';
+import { UserPlan } from 'src/common/entity/user-plan.entity';
 // import { PaywallDocument } from './entities/paywall.model';
 import { Paywall, PaywallDocument } from './entities/paywall.schema';
 import { Plan, PlanDocument } from './entities/plan.schema';
@@ -24,6 +25,8 @@ import {
 @Injectable()
 export class PaywallService {
   constructor(
+    @InjectRepository(UserPlan) 
+    private readonly userPlanRepository: Repository<UserPlan>,
     @InjectRepository(Site)
     private readonly siteRpo: Repository<Site>,
     @InjectRepository(Event)
@@ -598,5 +601,28 @@ export class PaywallService {
       }
 
       return response;
+  }
+
+  async getPlanByUserId(obj: any): Promise<any> {
+    const { userId } = obj;
+    if (userId) {
+      const result = await this.userPlanRepository
+        .createQueryBuilder('userPlan')
+        .where('userPlan.id_user = :idUser', { idUser: userId })
+        .andWhere('userPlan.is_active = :isActive', { isActive: true })
+        .getOne();
+
+      return result;
+    } 
+    throw new NotFoundException("The userId field was not found");
+  }
+
+  async getPlanInfo(obj: any): Promise<any> {
+    const { planId } = obj;
+    if (planId) {
+      const planEntry = await this.planModel.findOne({ planId: "410" });
+      return planEntry;
+    } 
+    throw new NotFoundException("The planId field was not found");
   }
 }

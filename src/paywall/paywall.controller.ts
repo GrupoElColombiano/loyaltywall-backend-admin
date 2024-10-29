@@ -92,5 +92,14 @@ export class PaywallController {
     return await this.paywallService.registerPointsEvent(metadata);
   }
 
+  @Get('getPlanByUserId')
+  async getPlanByUserId(@Body() metadata: any): Promise<any> {
+    return await this.paywallService.getPlanByUserId(metadata);
+  }
+
+  @Get('getPlanInfo')
+  async getPlanInfo(@Body() metadata: any): Promise<any> {
+    return await this.paywallService.getPlanInfo(metadata);
+  }
   
 }

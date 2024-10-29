@@ -10,9 +10,10 @@ import { Site } from 'src/common/entity/site.entity';
 
 import { PointsEvents } from 'src/common/entity/points-events.entity';
 import { EventsPointsSite } from 'src/common/entity/events-points-site.entity';
+import { UserPlan } from 'src/common/entity/user-plan.entity';
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Event, PointsEvents, EventsPointsSite, Site]),
+    TypeOrmModule.forFeature([Event, PointsEvents, EventsPointsSite, Site, UserPlan]),
     MongooseModule.forFeature([
       { name: Paywall.name, schema: PaywallSchema },
       { name: Plan.name, schema: PlanSchema },
