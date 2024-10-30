@@ -15,6 +15,7 @@ import { UserPlan } from 'src/common/entity/user-plan.entity';
 // import { PaywallDocument } from './entities/paywall.model';
 import { Paywall, PaywallDocument } from './entities/paywall.schema';
 import { Plan, PlanDocument } from './entities/plan.schema';
+import { Segment, SegmentDocument } from './entities/segment.schema';
 
 import {
   PaywallData,
@@ -38,6 +39,7 @@ export class PaywallService {
     private entityManager: EntityManager,
     @InjectModel(Paywall.name) private paywallModel: Model<PaywallDocument>,
     @InjectModel(Plan.name) private planModel: Model<PlanDocument>,
+    @InjectModel(Segment.name) private segmentModel: Model<SegmentDocument>,
   ) {}
 
   create(createPaywallDto: CreatePaywallDto) {
@@ -620,9 +622,19 @@ export class PaywallService {
   async getPlanInfo(obj: any): Promise<any> {
     const { planId } = obj;
     if (planId) {
-      const planEntry = await this.planModel.findOne({ planId: "410" });
+      const planEntry = await this.planModel.findOne({ planId });
       return planEntry;
     } 
     throw new NotFoundException("The planId field was not found");
   }
+
+  async getSegmentInfo(obj: any): Promise<any> {
+    const { planId, categoryId } = obj;
+    if (planId && categoryId) {
+      const segmentEntry = await this.segmentModel.findOne({ planId, categoryId });
+      return segmentEntry;
+    }
+    throw new NotFoundException("The planId field or categoryId was not found");
+  }
+
 }

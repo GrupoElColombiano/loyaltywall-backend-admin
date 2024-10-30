@@ -1,6 +1,5 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToMany,  ManyToOne, JoinColumn } from "typeorm";
 import { Plan } from "../../plans/entity/plan.entity";
-import { UserAdminEntity } from "../../users/entities/user.entity";
 
 @Entity({ name: 'user_plan' })
 export class UserPlan {
