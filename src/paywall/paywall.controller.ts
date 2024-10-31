@@ -93,8 +93,8 @@ export class PaywallController {
   }
 
   @Get('getPlanByUserId')
-  async getPlanByUserId(@Body() metadata: any): Promise<any> {
-    return await this.paywallService.getPlanByUserId(metadata);
+  async getPlanByUserId(@Query('userId') userId: string): Promise<any> {
+    return await this.paywallService.getPlanByUserId(userId);
   }
 
   @Get('getPlanInfo')
