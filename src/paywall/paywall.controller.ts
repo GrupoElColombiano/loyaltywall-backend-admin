@@ -101,5 +101,10 @@ export class PaywallController {
   async getPlanInfo(@Body() metadata: any): Promise<any> {
     return await this.paywallService.getPlanInfo(metadata);
   }
+
+  @Get('getSegmentInfo')
+  async getSegmentInfo(@Body() metadata: any): Promise<any> {
+    return await this.paywallService.getSegmentInfo(metadata);
+  }
   
 }

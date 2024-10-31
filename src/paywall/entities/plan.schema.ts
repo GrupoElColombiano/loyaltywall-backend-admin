@@ -17,11 +17,11 @@ export class Plan {
   @Prop()
   usertype: string;
 
-  @Prop({ type: [PlanDataSchema] }) // Utiliza PaywallDataSchema para especificar el tipo
-  plansProductsCategory: PlanDataDocument[]; // Declara paywallData como un arreglo de objetos PaywallData
+  @Prop({ type: [PlanDataSchema] })
+  plansProductsCategory: PlanDataDocument[];
 
-  @Prop({ type: [UserPlansSchema] }) // Utiliza PaywallDataSchema para especificar el tipo
-  userPlans: UserPlansDocument[]; // Declara userPlans como un arreglo de objetos para guardar la version del plan y su fecha de expiracion
+  @Prop({ type: [UserPlansSchema] })
+  userPlans: UserPlansDocument[];
 }
 
 export const PlanSchema = SchemaFactory.createForClass(Plan);

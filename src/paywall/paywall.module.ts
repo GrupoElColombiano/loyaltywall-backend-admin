@@ -4,6 +4,7 @@ import { PaywallController } from './paywall.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Paywall, PaywallSchema } from './entities/paywall.schema';
 import { Plan, PlanSchema } from './entities/plan.schema';
+import { Segment, SegmentSchema } from './entities/segment.schema';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Event } from 'src/common/entity/event.entity';
 import { Site } from 'src/common/entity/site.entity';
@@ -17,6 +18,7 @@ import { UserPlan } from 'src/common/entity/user-plan.entity';
     MongooseModule.forFeature([
       { name: Paywall.name, schema: PaywallSchema },
       { name: Plan.name, schema: PlanSchema },
+      { name: Segment.name, schema: SegmentSchema },
     ]),
   ],
   controllers: [PaywallController],
