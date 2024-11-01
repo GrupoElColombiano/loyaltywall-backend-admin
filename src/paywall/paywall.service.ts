@@ -303,6 +303,7 @@ export class PaywallService {
     unlimited: boolean,
     allProduct: boolean,
     identifier: number,
+    segmentUser:string = 'hombre'
   ): Promise<any> {
     const permissions = {
       template: '',
@@ -405,12 +406,24 @@ export class PaywallService {
 
     permissions.avalaible = avalaible;
     permissions.unlimited = unlimited;
-    if(!permissions.unlimited && permissions.avalaible !> 0){
 
+    let segmentdisponibility:boolean;
+
+    if (permissions.unlimited.toString() === "false" && permissions.avalaible < 1) {
+      const {planId} = await this.getPlanByUserId(uniqueId)
+      const {segments} = await this.getSegmentInfo({
+        planId,
+        categoryId: category
+      });
+      console.log(segments)
+      const segment = segments.find(element => element.segment === segmentUser)
+      console.log(segment)
+      const disponibility = segment.quantity !== paywallEntryCurrent.length
+      segmentdisponibility = disponibility
     }
     // permissions.pages = JSON.stringify(paywallEntryCurrent);
     // Devuelve los datos de permisos o lo que desees.
-    return {permissions};
+    return {permissions, segmentdisponibility};
   }
 
   async addPlanPaywallMongo(obj: any): Promise<any> {
@@ -522,7 +535,8 @@ export class PaywallService {
       const infoPlan = await this.getPlanInfo(result.id_plan);
       return { 
         plansProductsCategory: infoPlan.plansProductsCategory, 
-        userType: result.user_type
+        userType: result.user_type,
+        planId: result.id_plan
       };
     }
   
