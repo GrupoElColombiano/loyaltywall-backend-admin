@@ -8,6 +8,7 @@ import { Product } from '../../product/entity/product.entity';
 import { PlanVersion } from './plan-versions.entity';
 import { UserPlan } from '../../common/entity/user-plan.entity';
 import { PlanTemplate } from '../../plans/entity/plan-template.entity';
+import { Segment } from '../../common/entity/segment.entity'
 
 @Entity({ name: 'plans' })
 export class Plan {
@@ -62,4 +63,7 @@ export class Plan {
 
   @OneToMany(() => PlanTemplate, planTemplate => planTemplate.plan)
   planTemplates: PlanTemplate[];
+
+  @OneToMany(() => Segment, segments => segments.plan)
+  segments: Segment[];
 }

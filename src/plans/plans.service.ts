@@ -12,6 +12,7 @@ import { Model } from 'mongoose';
 import { PlanVersion } from './schema/plan-version.schema';
 import { PlanVersion as Version } from '../plans/entity/plan-versions.entity';
 import { CategorysAccess } from 'src/common/entity/categorys-access.entity';
+import { Segment } from 'src/common/entity/Segment.entity';
 import { UserPlan } from 'src/common/entity/user-plan.entity';
 // import { PlanHistory } from './schema/plan-history.schema'
 import { classToPlain } from 'class-transformer';
@@ -60,6 +61,7 @@ export class PlansService {
     @InjectModel(PlanMongo.name) private readonly planModel: Model<PlanMongo>,
     @InjectModel(PlanHistory.name) private readonly planHistoryModel: Model<PlanHistory>,
     @InjectRepository(CategorysAccess) private readonly categorysAccessRepository: Repository<CategorysAccess>,
+    @InjectRepository(Segment) private readonly SegmentRepository: Repository<Segment>,
     //@InjectRepository(Product)
     //private readonly product: Repository<Product>,
     @InjectRepository(Version) private readonly version: Repository<Version>,
@@ -1629,21 +1631,17 @@ export class PlansService {
 
 
 
-  async getPlanSubscription(idPlan: number, versionPlan: number): Promise<any> {
-
-  const idUser = 'someUserId';
-
+  async getPlanSubscription(idPlan: number, idUser: number): Promise<any> {
+    console.log("--- executed get plan subscription ---", { idPlan, idUser });
 
     try {
       const subscription = await this.subscriptionRepository.createQueryBuilder('subscription')
       .leftJoinAndSelect('subscription.plan', 'plan')
       .where('subscription.plan.idPlan = :idPlan', { idPlan })
-      .andWhere('(subscription.cancellationStatus = 1)')
-      .andWhere('subscription.sysdate > CURRENT_TIMESTAMP')
+      // .andWhere('(subscription.cancellationStatus = 1)')
+      // .andWhere('subscription.sysdate > CURRENT_TIMESTAMP')
       .orderBy('subscription.sysdate', 'DESC')
       .getOne();
-
-      console.log(" EL RESULTADO ", subscription)
 
       if(subscription){
 
@@ -1661,6 +1659,8 @@ export class PlansService {
         .leftJoinAndSelect('plansProductsCategory.sites', 'sites')
         .leftJoinAndSelect('plansProductsCategory.categorysAccess', 'categorysAccess')
         .leftJoinAndSelect('categorysAccess.category', 'category')
+        // .leftJoinAndSelect('subscription.segmentCategoryPlan', 'segmentCategoryPlan')
+        .leftJoinAndSelect('plan.segments', 'segments')
         .getOne();
 
         return planCurrent
@@ -1676,6 +1676,30 @@ export class PlansService {
     }
   }
 
+  
 
+  async addSegment(body): Promise<any> {
+    console.log(" executed AddSegment", body);
+    const { name, value, quantity, priority, categoryId, planId } = body;
+    //SegmentRepository
+
+    function generateUUID() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+          const r = (Math.random() * 16) | 0,
+                v = c === 'x' ? r : (r & 0x3) | 0x8;
+          return v.toString(16);
+      });
+  }
+    
+    if (name && value && quantity && priority && categoryId && planId) {
+      let segment: Segment;
+
+      const newSegment = new Segment();
+      newSegment.id = name;
+      // const id = 
+      // const createResponse = await this.SegmentRepository()
+    }
+    throw new NotFoundException("Not found a field, please review the body");
+  };
 }
 
