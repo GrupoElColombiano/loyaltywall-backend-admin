@@ -31,6 +31,7 @@ import { Plan as planes } from './entity/plan.entity';
 import { Plan as PlanPay, PlanSchema } from '../paywall/entities/plan.schema';
 import { PlanHistory, PlanHistorySchema } from './schema/plan-history.schema';
 import { PlanUserHistory } from './entity/plan_user_history.entity';
+import { Segment } from 'src/common/entity/segment.entity';
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -58,6 +59,7 @@ import { PlanUserHistory } from './entity/plan_user_history.entity';
       EventsPointsSite,
       Site,
       PlanUserHistory,
+      Segment
     ]),
     RegisterlogModule,
   ],
