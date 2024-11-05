@@ -18,7 +18,6 @@ import {
   Scopes,
   Unprotected,
 } from 'nest-keycloak-connect';
-
 @Controller('paywall')
 @Unprotected() // Controller is unprotected
 export class PaywallController {
@@ -66,7 +65,8 @@ export class PaywallController {
     @Query('duration') duration: number,
     @Query('unlimited') unlimited: boolean,
     @Query('allProduct') allProduct: boolean,
-    @Query('identifier') identifier: number
+    @Query('identifier') identifier: number,
+    @Query('kc_id') idForSegment: string
   ): Promise<any> {
     return await this.paywallService.getMetadataPaywall(
       uniqueId,
@@ -79,6 +79,7 @@ export class PaywallController {
       unlimited,
       allProduct,
       identifier,
+      idForSegment
     );
   }
 
@@ -93,7 +94,9 @@ export class PaywallController {
   }
 
   @Get('getPlanByUserId')
-  async getPlanByUserId(@Query('userId') userId: string): Promise<any> {
+  async getPlanByUserId(
+    @Query('userId') userId: string,
+    ): Promise<any> {
     return await this.paywallService.getPlanByUserId(userId);
   }
 

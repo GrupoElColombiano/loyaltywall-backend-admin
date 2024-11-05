@@ -1,9 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
 import { CreatePaywallDto } from './dto/create-paywall.dto';
 import { UpdatePaywallDto } from './dto/update-paywall.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
- 
+import { catchError, firstValueFrom } from 'rxjs';
+
 import { InjectRepository } from '@nestjs/typeorm';
 import { Event } from 'src/common/entity/event.entity';
 import { Site } from 'src/common/entity/site.entity';
@@ -22,9 +24,12 @@ import {
   PaywallDataDocument,
   PaywallDataSchema,
 } from './entities/paywall-data.schema';
+import { Observable } from 'rxjs';
+import { AxiosError, AxiosResponse } from 'axios';
 
 @Injectable()
 export class PaywallService {
+  private readonly logger = new Logger(PaywallService.name);
   constructor(
     @InjectRepository(UserPlan) 
     private readonly userPlanRepository: Repository<UserPlan>,
@@ -40,6 +45,7 @@ export class PaywallService {
     @InjectModel(Paywall.name) private paywallModel: Model<PaywallDocument>,
     @InjectModel(Plan.name) private planModel: Model<PlanDocument>,
     @InjectModel(Segment.name) private segmentModel: Model<SegmentDocument>,
+    private readonly httpService:HttpService,
   ) {}
 
   create(createPaywallDto: CreatePaywallDto) {
@@ -303,7 +309,7 @@ export class PaywallService {
     unlimited: boolean,
     allProduct: boolean,
     identifier: number,
-    segmentUser:string = 'hombre'
+    idForSegment:string
   ): Promise<any> {
     const permissions = {
       template: '',
@@ -415,14 +421,17 @@ export class PaywallService {
         planId,
         categoryId: category
       });
-      console.log(segments)
-      const segment = segments.find(element => element.segment === segmentUser)
+      
+      const segmentsUser = await this.getSegmentInfoUserKc(idForSegment)
+
+      const segment = segments.find(element => element.segment === segmentsUser)
       console.log(segment)
-      const disponibility = segment.quantity !== paywallEntryCurrent.length
-      segmentdisponibility = disponibility
+      if(segment) {
+        const disponibility = segment.quantity !== paywallEntryCurrent.length
+        segmentdisponibility = disponibility
+      }
     }
-    // permissions.pages = JSON.stringify(paywallEntryCurrent);
-    // Devuelve los datos de permisos o lo que desees.
+    // Devuelve los datos de permisos
     return {permissions, segmentdisponibility};
   }
 
@@ -559,5 +568,23 @@ export class PaywallService {
     }
     throw new NotFoundException("The planId field or categoryId was not found");
   }
+
+  async getSegmentInfoUserKc(id_kc: string){
+    const auth = Buffer.from("karaf:karaf").toString("base64");
+    const response= await firstValueFrom(this.httpService.get(`http://190.242.47.76:8181/cxs/profiles/${id_kc}`,
+      {
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Basic ${auth}`
+      }
+    }
+    ).pipe(
+      catchError((error: AxiosError) => {
+        this.logger.error(error.response.data);
+        throw 'An error happened!';
+      }),
+    ))
+    return response.data.segments;
+  } 
 
 }
