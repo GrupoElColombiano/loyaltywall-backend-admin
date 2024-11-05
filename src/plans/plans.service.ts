@@ -1631,10 +1631,8 @@ export class PlansService {
 
 
 
-  async getPlanSubscription(idPlan: number, versionPlan: number): Promise<any> {
-
-  const idUser = 'someUserId';
-
+  async getPlanSubscription(idPlan: number, idUser: number): Promise<any> {
+    console.log("--- executed get plan subscription ---", { idPlan, idUser });
 
     try {
       const subscription = await this.subscriptionRepository.createQueryBuilder('subscription')
@@ -1642,10 +1640,8 @@ export class PlansService {
       .where('subscription.plan.idPlan = :idPlan', { idPlan })
       // .andWhere('(subscription.cancellationStatus = 1)')
       // .andWhere('subscription.sysdate > CURRENT_TIMESTAMP')
-      // .orderBy('subscription.sysdate', 'DESC')
+      .orderBy('subscription.sysdate', 'DESC')
       .getOne();
-
-      console.log(" EL RESULTADO ", subscription)
 
       if(subscription){
 
@@ -1666,8 +1662,6 @@ export class PlansService {
         // .leftJoinAndSelect('subscription.segmentCategoryPlan', 'segmentCategoryPlan')
         .leftJoinAndSelect('plan.segments', 'segments')
         .getOne();
-
-        console.log(" :::: planCurrent ::::", planCurrent);
 
         return planCurrent
       }
