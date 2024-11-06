@@ -1758,18 +1758,18 @@ export class PlansService {
       const subscription = await this.subscriptionRepository.createQueryBuilder('subscription')
       .leftJoinAndSelect('subscription.plan', 'plan')
       .where('subscription.plan.idPlan = :idPlan', { idPlan })
-      // .andWhere('(subscription.cancellationStatus = 1)')
-      // .andWhere('subscription.sysdate > CURRENT_TIMESTAMP')
       .orderBy('subscription.sysdate', 'DESC')
       .getOne();
       console.log({ subscription });
-      if(subscription){
-
-        let planQueryBuilder = await this.planRepository
+      let planQueryBuilder = await this.planRepository
         .createQueryBuilder('plan');
-
-
+      if (subscription) {
         planQueryBuilder = planQueryBuilder.where('plan.idPlan = :idPlan', { idPlan })
+      } else {
+        planQueryBuilder = planQueryBuilder.where('plan.userType = :userType', { userType: 'Anónimo' })
+          .andWhere('plan.idSite = :idSite', { idSite: 1 }) // Filtrar por el nombre del sitio
+          .andWhere('plan.isActive = true');
+      }
 
         const planCurrent = await planQueryBuilder
         .leftJoinAndSelect('plan.rates', 'rates')
@@ -1779,12 +1779,10 @@ export class PlansService {
         .leftJoinAndSelect('plansProductsCategory.sites', 'sites')
         .leftJoinAndSelect('plansProductsCategory.categorysAccess', 'categorysAccess')
         .leftJoinAndSelect('categorysAccess.category', 'category')
-        // .leftJoinAndSelect('subscription.segmentCategoryPlan', 'segmentCategoryPlan')
         .leftJoinAndSelect('plan.segments', 'segments')
         .getOne();
 
         return planCurrent
-      }
 
       return null
 
