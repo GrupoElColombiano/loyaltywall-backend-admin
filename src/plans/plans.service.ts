@@ -91,12 +91,49 @@ export class PlansService {
    */
   async create(plan: any): Promise<any> {
     let newCategoriesPromises = [];
+    console.log({ plan: JSON.stringify(plan) });
     try {
       // Verificar si ya existe un plan con el mismo nombre
       const planExists = await this.planRepository.findOne({
         where: { name: plan.name, idSite: plan.id},
       });
       console.log("🚀 ~ PlansService ~ create ~ planExists:", planExists)
+
+      if(plan.segments.length > 0) {
+        function generateUUID() {
+          return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            const r = (Math.random() * 16) | 0,
+              v = c === 'x' ? r : (r & 0x3) | 0x8;
+            return v.toString(16);
+          });
+        }
+        //Crear los rates nuevamente
+        for (const segment of plan.segments) {
+          console.log("🚀 ~ updatePlanFinal ~ segment:", segment)
+          for (const category of segment.data) {
+            console.log("🚀 ~ updatePlanFinal ~ category:", category)
+            const newSegment: any = {
+              id: generateUUID(),
+              name: category.segment,
+              value: category.segment,
+              quantity: category.quantity,
+              priority: category.priority,
+              categoryId: segment.categoryId.toString(),
+              planId: planExists.idPlan,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            }
+            console.log({ newSegment });
+  
+            try {
+              const savedSegment = await this.SegmentRepository.save(newSegment);
+              console.log(color.green('savedSegment'), savedSegment)
+            } catch (error) {
+              console.log(color.red('error - 771'), error);
+            }
+          }
+        }
+      }
 
       //Verifica si el plan existe y si se requiere activar el plan
       if (planExists && planExists?.isActive !== plan.isActive) {
@@ -105,6 +142,7 @@ export class PlansService {
           { idPlan: planExists?.idPlan },
           { isActive: plan.isActive }
         );
+        
       }
       // Inicializar el objeto de plan editado
       const planEdited: any = {
@@ -328,56 +366,6 @@ export class PlansService {
     if (result.length === 0) {
       throw new NotFoundException(`No products found for plan ID ${planId}`);
     }
-
-    // Transformar los resultados en el formato deseado
-    // const groupedResults = result.reduce(async(acc, row) => {
-    //   const productId = row.idProduct;
-    //   const product = acc.find(p => p.idProduct === productId);
-    //   console.log("💊💊💊💊💊💊💊💊💊💊💊")
-    //   let segments = [];
-    //   console.log({ planId, categoryId: row.idCategory })
-    //   try {
-    //     console.log("1")
-    //     const response = await this.SegmentRepository.find({
-    //       where: {
-    //         planId,
-    //         categoryId: row.idCategory
-    //       }
-    //     });  
-    //     console.log({ response });
-    //     console.log("2")
-    //   } catch (error) {
-    //     console.log(color.red(`error - ${error} `))
-    //   }
-      
-    //   console.log("🧯🧯🧯🧯🧯🧯")
-    //   const categoryAccess = {
-    //     id: row.a_id,
-    //     amount: row.a_amount,
-    //     unlimited: row.a_unlimited,
-    //     duration: row.a_duration,
-    //     idPlansProductCategory: row.idPlansProductCategory,
-    //     category: {
-    //       idCategory: row.idCategory,
-    //       name: row.b_name,
-    //       description: row.b_description,
-    //       rules: row.b_rules,
-    //     },
-    //   };
-
-    //   if (product) {
-    //     product.category_access.push(categoryAccess);
-    //   } else {
-    //     acc.push({
-    //       idProduct: productId,
-    //       name: row.d_name,
-    //       description: row.d_description,
-    //       category_access: [categoryAccess],
-    //     });
-    //   }
-
-    //   return acc;
-    // }, []);
 
     const groupedResults = [];
 
