@@ -717,6 +717,68 @@ export class PlansService {
           }
       }
 
+      if(updatedPlan.segments.length > 0) {
+        function generateUUID() {
+          return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            const r = (Math.random() * 16) | 0,
+              v = c === 'x' ? r : (r & 0x3) | 0x8;
+            return v.toString(16);
+          });
+        }
+        //Crear los rates nuevamente
+        for (const segment of updatedPlan.segments) {
+          console.log("🚀 ~ updatePlanFinal ~ segment:", segment)
+          for (const category of segment.data) {
+            console.log("🚀 ~ updatePlanFinal ~ category:", category)
+            const newSegment: any = {
+              id: generateUUID(),
+              name: category.segment,
+              value: category.segment,
+              quantity: category.quantity,
+              priority: category.priority,
+              categoryId: segment.categoryId.toString(),
+              planId: id,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            }
+            console.log({ newSegment });
+            // console.log(color.red('newRate'), newRate)
+  
+            const foundSegment = await this.SegmentRepository.findOne({
+              where: { planId: id, categoryId: segment.categoryId, value: category.segment },
+            });
+            console.log({ foundSegment });
+            if (!foundSegment) {
+              try {
+                const savedSegment = await this.SegmentRepository.save(newSegment);
+                console.log(color.green('savedSegment'), savedSegment)
+              } catch (error) {
+                console.log(color.red('error - 771'), error);
+              }
+              
+            } else {
+              try {
+                const response = await this.SegmentRepository.createQueryBuilder()
+                  .update(Segment)
+                  .set({
+                    updatedAt: new Date().toISOString(),
+                    quantity: category.quantity,
+                    priority: category.priority
+                  })
+                  .where('userType = :userType', { userType: 'Anónimo' })
+                  .andWhere('value = :value', { value: category.segment })
+                  .andWhere('categoryId = :categoryId', { categoryId: segment.categoryId })
+                  .execute();
+                console.log(color.green('savedRate'), response);
+              } catch (error) {
+                console.log(color.red('error - 789'), error);
+              }
+            }
+            // const savedSegment = await this.SegmentRepository.save(newSegment);
+          }
+        }
+      }
+
       //Logica si updatedPlan.categories tiene longitud > 0 Eliminar
       // console.log(color.red('ELIMINANDO...'), updatedPlan.categories.length)
       if (updatedPlan.categories.length >= 0) {
