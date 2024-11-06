@@ -12,7 +12,7 @@ import { Model } from 'mongoose';
 import { PlanVersion } from './schema/plan-version.schema';
 import { PlanVersion as Version } from '../plans/entity/plan-versions.entity';
 import { CategorysAccess } from 'src/common/entity/categorys-access.entity';
-import { Segment } from 'src/common/entity/Segment.entity';
+import { Segment } from 'src/common/entity/segment.entity';
 import { UserPlan } from 'src/common/entity/user-plan.entity';
 // import { PlanHistory } from './schema/plan-history.schema'
 import { classToPlain } from 'class-transformer';
@@ -296,6 +296,9 @@ export class PlansService {
 
   async getProductsCategoriesPlan(planId: number): Promise<any> {
     console.log("Executed getProducts categories")
+
+    
+
     const result = await this.categorysAccessRepository
       .createQueryBuilder('a')
       .select([
@@ -320,14 +323,82 @@ export class PlansService {
 
     console.log("🔥 ::result:: 🔥", JSON.stringify(result));
 
+    
+
     if (result.length === 0) {
       throw new NotFoundException(`No products found for plan ID ${planId}`);
     }
 
     // Transformar los resultados en el formato deseado
-    const groupedResults = result.reduce((acc, row) => {
+    // const groupedResults = result.reduce(async(acc, row) => {
+    //   const productId = row.idProduct;
+    //   const product = acc.find(p => p.idProduct === productId);
+    //   console.log("💊💊💊💊💊💊💊💊💊💊💊")
+    //   let segments = [];
+    //   console.log({ planId, categoryId: row.idCategory })
+    //   try {
+    //     console.log("1")
+    //     const response = await this.SegmentRepository.find({
+    //       where: {
+    //         planId,
+    //         categoryId: row.idCategory
+    //       }
+    //     });  
+    //     console.log({ response });
+    //     console.log("2")
+    //   } catch (error) {
+    //     console.log(color.red(`error - ${error} `))
+    //   }
+      
+    //   console.log("🧯🧯🧯🧯🧯🧯")
+    //   const categoryAccess = {
+    //     id: row.a_id,
+    //     amount: row.a_amount,
+    //     unlimited: row.a_unlimited,
+    //     duration: row.a_duration,
+    //     idPlansProductCategory: row.idPlansProductCategory,
+    //     category: {
+    //       idCategory: row.idCategory,
+    //       name: row.b_name,
+    //       description: row.b_description,
+    //       rules: row.b_rules,
+    //     },
+    //   };
+
+    //   if (product) {
+    //     product.category_access.push(categoryAccess);
+    //   } else {
+    //     acc.push({
+    //       idProduct: productId,
+    //       name: row.d_name,
+    //       description: row.d_description,
+    //       category_access: [categoryAccess],
+    //     });
+    //   }
+
+    //   return acc;
+    // }, []);
+
+    const groupedResults = [];
+
+    for (const row of result) {
       const productId = row.idProduct;
-      const product = acc.find(p => p.idProduct === productId);
+      const product = groupedResults.find(p => p.idProduct === productId);
+
+      let segments = [];
+      console.log({ planId, categoryId: row.idCategory });
+
+      try {
+        console.log('✅ ✅ ✅ ✅ ✅ ✅ ✅')
+        segments = await this.SegmentRepository.find({
+          where: {
+            planId: Number(planId),
+            categoryId: row.idCategory
+          }
+        });
+      } catch (error) {
+        console.log(color.red(`error 400 - ${error}`));
+      }
 
       const categoryAccess = {
         id: row.a_id,
@@ -335,6 +406,7 @@ export class PlansService {
         unlimited: row.a_unlimited,
         duration: row.a_duration,
         idPlansProductCategory: row.idPlansProductCategory,
+        segments,
         category: {
           idCategory: row.idCategory,
           name: row.b_name,
@@ -346,16 +418,14 @@ export class PlansService {
       if (product) {
         product.category_access.push(categoryAccess);
       } else {
-        acc.push({
+        groupedResults.push({
           idProduct: productId,
           name: row.d_name,
           description: row.d_description,
           category_access: [categoryAccess],
         });
       }
-
-      return acc;
-    }, []);
+    }
 
 
     return groupedResults;
@@ -1704,7 +1774,7 @@ export class PlansService {
       // .andWhere('subscription.sysdate > CURRENT_TIMESTAMP')
       .orderBy('subscription.sysdate', 'DESC')
       .getOne();
-
+      console.log({ subscription });
       if(subscription){
 
         let planQueryBuilder = await this.planRepository
