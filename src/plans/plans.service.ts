@@ -1631,7 +1631,7 @@ export class PlansService {
 
 
 
-  async getPlanSubscription(idPlan: number, idUser: number): Promise<any> {
+  async getPlanSubscription(idPlan: number, idUser: string): Promise<any> {
     console.log("--- executed get plan subscription ---", { idPlan, idUser });
 
     try {

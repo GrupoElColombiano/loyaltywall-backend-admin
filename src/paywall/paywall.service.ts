@@ -19,6 +19,7 @@ import { Paywall, PaywallDocument } from './entities/paywall.schema';
 import { Plan, PlanDocument } from './entities/plan.schema';
 import { Segment, SegmentDocument } from './entities/segment.schema';
 
+
 import {
   PaywallData,
   PaywallDataDocument,
@@ -26,7 +27,7 @@ import {
 } from './entities/paywall-data.schema';
 import { Observable } from 'rxjs';
 import { AxiosError, AxiosResponse } from 'axios';
-
+import {PlansService} from '../plans/plans.service'
 @Injectable()
 export class PaywallService {
   private readonly logger = new Logger(PaywallService.name);
@@ -46,6 +47,7 @@ export class PaywallService {
     @InjectModel(Plan.name) private planModel: Model<PlanDocument>,
     @InjectModel(Segment.name) private segmentModel: Model<SegmentDocument>,
     private readonly httpService:HttpService,
+    private readonly plansService: PlansService
   ) {}
 
   create(createPaywallDto: CreatePaywallDto) {
@@ -415,19 +417,104 @@ export class PaywallService {
 
     let segmentdisponibility:boolean;
 
+    
+    interface Product {
+      idProduct: number;
+      name: string;
+      description: string;
+      isActive: boolean;
+      all_product: boolean;
+      createdAt: string;
+      updatedAt: string;
+    }
+    
+    interface Site {
+      idSite: number;
+      name: string;
+      description: string;
+      url: string;
+      isActive: boolean;
+      createAt: string;
+      updateAt: string;
+    }
+    
+    interface Category {
+      idCategory: number;
+      name: string;
+      description: string;
+      rules: string;
+      is_accessible_for_free: boolean;
+    }
+    
+    interface CategoryAccess {
+      id: number;
+      amount: number;
+      unlimited: boolean;
+      frequency: string;
+      typeDuration: string;
+      duration: number;
+      category: Category;
+    }
+
+    interface ElementPlansProductCategory {
+      idPlansProductCategory: number;
+      product: Product;
+      sites: Site;
+      categorysAccess: CategoryAccess[];
+    }
+
+    interface PlanSegment {
+      id: string;
+      name: string;
+      value: string;
+      categoryId: string;
+      planId: number;
+      quantity: number;
+      priority: number;
+      createdAt: string;
+      updatedAt: string;
+    }
+    let segmentTotalQuantity:number;
+
     if (permissions.unlimited.toString() === "false" && permissions.avalaible < 1) {
       const {planId} = await this.getPlanByUserId(uniqueId)
-      const {segments} = await this.getSegmentInfo({
-        planId,
-        categoryId: category
-      });
+      const planInfo = await this.plansService.getPlanSubscription(planId, uniqueId);
       
       const segmentsUser = await this.getSegmentInfoUserKc(idForSegment)
+      console.log(segmentsUser)
 
-      const segment = segments.find(element => element.segment === segmentsUser)
-      console.log(segment)
-      if(segment) {
-        const disponibility = segment.quantity !== paywallEntryCurrent.length
+      if(planInfo && segmentsUser){
+        console.log(" planInfo ", planInfo)
+        const segmentPlan = planInfo.plansProductsCategory?.find((element:ElementPlansProductCategory) => {
+          return (
+            element.categorysAccess[0] &&
+            element.categorysAccess[0].category &&
+            element.categorysAccess[0].category.name.toLowerCase() === category.toLowerCase()
+          );
+        });
+        console.log(segmentPlan)
+        if (!segmentPlan) {
+          throw new Error('No se encontró el segmento del plan para la categoría especificada');
+        }
+
+        if(segmentPlan){
+          const cantidadPlan = segmentPlan.categorysAccess[0].amount;
+          const filteredSegments = planInfo.segments.filter((segment:PlanSegment) => segmentsUser.includes(segment.value));
+          const segmentsQuantity = filteredSegments.find((element:PlanSegment) => element.priority === 1);
+          if(!segmentsQuantity){
+            const segmentsQuantityTwo = filteredSegments[0];
+            segmentTotalQuantity = segmentsQuantityTwo.quantity;
+          } else {
+            segmentTotalQuantity = segmentsQuantity.quantity;
+          }
+          
+        }
+      }
+      
+
+      
+      if(segmentTotalQuantity) {
+        const disponibility = segmentTotalQuantity !== paywallEntryCurrent.length
         segmentdisponibility = disponibility
       }
     }
@@ -541,7 +628,10 @@ export class PaywallService {
       .getRawOne();
   
     if (result) {
-      const infoPlan = await this.getPlanInfo(result.id_plan);
+      const infoPlan = await this.plansService.getPlanSubscription(result.id_plan, userId);
+      if (!infoPlan) {
+        throw new Error('No active plan found for the given user');
+      }
       return { 
         plansProductsCategory: infoPlan.plansProductsCategory, 
         userType: result.user_type,

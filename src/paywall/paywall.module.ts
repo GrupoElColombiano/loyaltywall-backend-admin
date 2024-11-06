@@ -13,6 +13,8 @@ import { PointsEvents } from 'src/common/entity/points-events.entity';
 import { EventsPointsSite } from 'src/common/entity/events-points-site.entity';
 import { UserPlan } from 'src/common/entity/user-plan.entity';
 import { HttpModule } from '@nestjs/axios';
+import { PlansModule } from 'src/plans/plans.module';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([Event, PointsEvents, EventsPointsSite, Site, UserPlan]),
@@ -21,7 +23,8 @@ import { HttpModule } from '@nestjs/axios';
       { name: Plan.name, schema: PlanSchema },
       { name: Segment.name, schema: SegmentSchema },
     ]),
-    HttpModule
+    HttpModule,
+    PlansModule
   ],
   controllers: [PaywallController],
   providers: [PaywallService],

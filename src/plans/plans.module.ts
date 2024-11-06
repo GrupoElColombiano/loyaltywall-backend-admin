@@ -65,5 +65,6 @@ import { Segment } from 'src/common/entity/segment.entity';
   ],
   controllers: [PlansController],
   providers: [PlansService],
+  exports: [PlansService]
 })
 export class PlansModule {}
