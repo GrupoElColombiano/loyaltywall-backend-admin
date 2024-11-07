@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Plan } from './entity/plan.entity';
 import { Subscription } from './entity/subscription.entity';
@@ -816,6 +816,7 @@ export class PlansService {
               
             } else {
               try {
+                console.log("🔑 - 🔑 - 🔑 - 🔑", { category })
                 const response = await this.SegmentRepository.createQueryBuilder()
                   .update(Segment)
                   .set({
@@ -823,7 +824,7 @@ export class PlansService {
                     quantity: category.quantity,
                     priority: category.priority
                   })
-                  .where('userType = :userType', { userType: 'Anónimo' })
+                  .where('planId = :id', { id })
                   .andWhere('value = :value', { value: category.segment })
                   .andWhere('categoryId = :categoryId', { categoryId: segment.categoryId })
                   .execute();
@@ -1819,5 +1820,49 @@ export class PlansService {
     }
     throw new NotFoundException("Not found a field, please review the body");
   };
+
+  async getSegments(): Promise<any> {
+    const url = `${process.env.CDP_ENDPOINT}/cxs/segments`;
+    const myHeaders = new Headers();
+    myHeaders.append("Authorization", "Basic a2FyYWY6a2FyYWY=");
+    myHeaders.append("Cookie", "context-profile-id=51620ed9-f82c-4e73-b2b6-11564866390e");
+    return fetch(url, {
+      method: "GET",
+      headers: myHeaders,
+      redirect: "follow"
+  })
+      .then((response) => response.json())
+      .then((result) => {
+          const mapper = result.map(({ id, name }:any) => {
+              return {
+                  label: name, value: id
+              }
+          })
+          return(mapper);
+      })
+      .catch((error) => console.error(error));
+  };
+
+  async deleteSegment({ planId, categoryId, value }): Promise<any> {
+    if (planId && categoryId && value) {
+      const foundSegment = await this.SegmentRepository.findOne({
+        where: { planId, categoryId, value },
+      });
+
+      console.log({ foundSegment });
+      if (foundSegment) {
+       const response = await this.SegmentRepository.delete(foundSegment);
+       console.log({ response });
+       return {
+        status: HttpStatus.OK,
+        message: "Segment deleted successfully",
+        response,
+       }
+      }
+      throw new NotFoundException("Not found a segment with this characteristics");
+
+    }
+    throw new NotFoundException("Not found a field, please review the body");
+  }
 }
 
