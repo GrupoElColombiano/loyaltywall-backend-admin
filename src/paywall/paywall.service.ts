@@ -498,12 +498,17 @@ export class PaywallService {
         }
 
         if(segmentPlan){
-          const cantidadPlan = segmentPlan.categorysAccess[0].amount;
+          const cantidadPlan = segmentPlan.categorysAccess[0];
           const filteredSegments = planInfo.segments.filter((segment:PlanSegment) => segmentsUser.includes(segment.value));
-          const segmentsQuantity = filteredSegments.find((element:PlanSegment) => element.priority === 1);
+          const segmentsQuantity = filteredSegments.find((element:PlanSegment) => Number(element.categoryId) === cantidadPlan.category.idCategory);
           if(!segmentsQuantity){
             const segmentsQuantityTwo = filteredSegments[0];
+            if(segmentsQuantityTwo){
             segmentTotalQuantity = segmentsQuantityTwo.quantity;
+            } else {
+              segmentTotalQuantity = 0;
+              segmentdisponibility = false;
+            }
           } else {
             segmentTotalQuantity = segmentsQuantity.quantity;
           }
@@ -519,6 +524,7 @@ export class PaywallService {
       }
     }
     // Devuelve los datos de permisos
+    
     return {permissions, segmentdisponibility};
   }
 
