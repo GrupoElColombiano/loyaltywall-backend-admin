@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Plan } from './entity/plan.entity';
 import { Subscription } from './entity/subscription.entity';
@@ -12,7 +12,7 @@ import { Model } from 'mongoose';
 import { PlanVersion } from './schema/plan-version.schema';
 import { PlanVersion as Version } from '../plans/entity/plan-versions.entity';
 import { CategorysAccess } from 'src/common/entity/categorys-access.entity';
-import { Segment } from 'src/common/entity/Segment.entity';
+import { Segment } from 'src/common/entity/segment.entity';
 import { UserPlan } from 'src/common/entity/user-plan.entity';
 // import { PlanHistory } from './schema/plan-history.schema'
 import { classToPlain } from 'class-transformer';
@@ -91,12 +91,49 @@ export class PlansService {
    */
   async create(plan: any): Promise<any> {
     let newCategoriesPromises = [];
+    console.log({ plan: JSON.stringify(plan) });
     try {
       // Verificar si ya existe un plan con el mismo nombre
       const planExists = await this.planRepository.findOne({
         where: { name: plan.name, idSite: plan.id},
       });
       console.log("🚀 ~ PlansService ~ create ~ planExists:", planExists)
+
+      if(plan.segments.length > 0) {
+        function generateUUID() {
+          return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            const r = (Math.random() * 16) | 0,
+              v = c === 'x' ? r : (r & 0x3) | 0x8;
+            return v.toString(16);
+          });
+        }
+        //Crear los rates nuevamente
+        for (const segment of plan.segments) {
+          console.log("🚀 ~ updatePlanFinal ~ segment:", segment)
+          for (const category of segment.data) {
+            console.log("🚀 ~ updatePlanFinal ~ category:", category)
+            const newSegment: any = {
+              id: generateUUID(),
+              name: category.segment,
+              value: category.segment,
+              quantity: category.quantity,
+              priority: category.priority,
+              categoryId: segment.categoryId.toString(),
+              planId: planExists.idPlan,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            }
+            console.log({ newSegment });
+  
+            try {
+              const savedSegment = await this.SegmentRepository.save(newSegment);
+              console.log(color.green('savedSegment'), savedSegment)
+            } catch (error) {
+              console.log(color.red('error - 771'), error);
+            }
+          }
+        }
+      }
 
       //Verifica si el plan existe y si se requiere activar el plan
       if (planExists && planExists?.isActive !== plan.isActive) {
@@ -105,6 +142,7 @@ export class PlansService {
           { idPlan: planExists?.idPlan },
           { isActive: plan.isActive }
         );
+        
       }
       // Inicializar el objeto de plan editado
       const planEdited: any = {
@@ -296,6 +334,9 @@ export class PlansService {
 
   async getProductsCategoriesPlan(planId: number): Promise<any> {
     console.log("Executed getProducts categories")
+
+    
+
     const result = await this.categorysAccessRepository
       .createQueryBuilder('a')
       .select([
@@ -320,14 +361,32 @@ export class PlansService {
 
     console.log("🔥 ::result:: 🔥", JSON.stringify(result));
 
+    
+
     if (result.length === 0) {
       throw new NotFoundException(`No products found for plan ID ${planId}`);
     }
 
-    // Transformar los resultados en el formato deseado
-    const groupedResults = result.reduce((acc, row) => {
+    const groupedResults = [];
+
+    for (const row of result) {
       const productId = row.idProduct;
-      const product = acc.find(p => p.idProduct === productId);
+      const product = groupedResults.find(p => p.idProduct === productId);
+
+      let segments = [];
+      console.log({ planId, categoryId: row.idCategory });
+
+      try {
+        console.log('✅ ✅ ✅ ✅ ✅ ✅ ✅')
+        segments = await this.SegmentRepository.find({
+          where: {
+            planId: Number(planId),
+            categoryId: row.idCategory
+          }
+        });
+      } catch (error) {
+        console.log(color.red(`error 400 - ${error}`));
+      }
 
       const categoryAccess = {
         id: row.a_id,
@@ -335,6 +394,7 @@ export class PlansService {
         unlimited: row.a_unlimited,
         duration: row.a_duration,
         idPlansProductCategory: row.idPlansProductCategory,
+        segments,
         category: {
           idCategory: row.idCategory,
           name: row.b_name,
@@ -346,16 +406,14 @@ export class PlansService {
       if (product) {
         product.category_access.push(categoryAccess);
       } else {
-        acc.push({
+        groupedResults.push({
           idProduct: productId,
           name: row.d_name,
           description: row.d_description,
           category_access: [categoryAccess],
         });
       }
-
-      return acc;
-    }, []);
+    }
 
 
     return groupedResults;
@@ -715,6 +773,69 @@ export class PlansService {
             const savedRate = await this.rateRepository.save(newRate);
             console.log(color.yellow('savedRate'), savedRate)
           }
+      }
+
+      if(updatedPlan.segments.length > 0) {
+        function generateUUID() {
+          return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            const r = (Math.random() * 16) | 0,
+              v = c === 'x' ? r : (r & 0x3) | 0x8;
+            return v.toString(16);
+          });
+        }
+        //Crear los rates nuevamente
+        for (const segment of updatedPlan.segments) {
+          console.log("🚀 ~ updatePlanFinal ~ segment:", segment)
+          for (const category of segment.data) {
+            console.log("🚀 ~ updatePlanFinal ~ category:", category)
+            const newSegment: any = {
+              id: generateUUID(),
+              name: category.segment,
+              value: category.segment,
+              quantity: category.quantity,
+              priority: category.priority,
+              categoryId: segment.categoryId.toString(),
+              planId: id,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            }
+            console.log({ newSegment });
+            // console.log(color.red('newRate'), newRate)
+  
+            const foundSegment = await this.SegmentRepository.findOne({
+              where: { planId: id, categoryId: segment.categoryId, value: category.segment },
+            });
+            console.log({ foundSegment });
+            if (!foundSegment) {
+              try {
+                const savedSegment = await this.SegmentRepository.save(newSegment);
+                console.log(color.green('savedSegment'), savedSegment)
+              } catch (error) {
+                console.log(color.red('error - 771'), error);
+              }
+              
+            } else {
+              try {
+                console.log("🔑 - 🔑 - 🔑 - 🔑", { category })
+                const response = await this.SegmentRepository.createQueryBuilder()
+                  .update(Segment)
+                  .set({
+                    updatedAt: new Date().toISOString(),
+                    quantity: category.quantity,
+                    priority: category.priority
+                  })
+                  .where('planId = :id', { id })
+                  .andWhere('value = :value', { value: category.segment })
+                  .andWhere('categoryId = :categoryId', { categoryId: segment.categoryId })
+                  .execute();
+                console.log(color.green('savedRate'), response);
+              } catch (error) {
+                console.log(color.red('error - 789'), error);
+              }
+            }
+            // const savedSegment = await this.SegmentRepository.save(newSegment);
+          }
+        }
       }
 
       //Logica si updatedPlan.categories tiene longitud > 0 Eliminar
@@ -1638,18 +1759,18 @@ export class PlansService {
       const subscription = await this.subscriptionRepository.createQueryBuilder('subscription')
       .leftJoinAndSelect('subscription.plan', 'plan')
       .where('subscription.plan.idPlan = :idPlan', { idPlan })
-      // .andWhere('(subscription.cancellationStatus = 1)')
-      // .andWhere('subscription.sysdate > CURRENT_TIMESTAMP')
       .orderBy('subscription.sysdate', 'DESC')
       .getOne();
-
-      if(subscription){
-
-        let planQueryBuilder = await this.planRepository
+      console.log({ subscription });
+      let planQueryBuilder = await this.planRepository
         .createQueryBuilder('plan');
-
-
+      if (subscription) {
         planQueryBuilder = planQueryBuilder.where('plan.idPlan = :idPlan', { idPlan })
+      } else {
+        planQueryBuilder = planQueryBuilder.where('plan.userType = :userType', { userType: 'Anónimo' })
+          .andWhere('plan.idSite = :idSite', { idSite: 1 }) // Filtrar por el nombre del sitio
+          .andWhere('plan.isActive = true');
+      }
 
         const planCurrent = await planQueryBuilder
         .leftJoinAndSelect('plan.rates', 'rates')
@@ -1659,12 +1780,10 @@ export class PlansService {
         .leftJoinAndSelect('plansProductsCategory.sites', 'sites')
         .leftJoinAndSelect('plansProductsCategory.categorysAccess', 'categorysAccess')
         .leftJoinAndSelect('categorysAccess.category', 'category')
-        // .leftJoinAndSelect('subscription.segmentCategoryPlan', 'segmentCategoryPlan')
         .leftJoinAndSelect('plan.segments', 'segments')
         .getOne();
 
         return planCurrent
-      }
 
       return null
 
@@ -1701,5 +1820,49 @@ export class PlansService {
     }
     throw new NotFoundException("Not found a field, please review the body");
   };
+
+  async getSegments(): Promise<any> {
+    const url = `${process.env.CDP_ENDPOINT}/cxs/segments`;
+    const myHeaders = new Headers();
+    myHeaders.append("Authorization", "Basic a2FyYWY6a2FyYWY=");
+    myHeaders.append("Cookie", "context-profile-id=51620ed9-f82c-4e73-b2b6-11564866390e");
+    return fetch(url, {
+      method: "GET",
+      headers: myHeaders,
+      redirect: "follow"
+  })
+      .then((response) => response.json())
+      .then((result) => {
+          const mapper = result.map(({ id, name }:any) => {
+              return {
+                  label: name, value: id
+              }
+          })
+          return(mapper);
+      })
+      .catch((error) => console.error(error));
+  };
+
+  async deleteSegment({ planId, categoryId, value }): Promise<any> {
+    if (planId && categoryId && value) {
+      const foundSegment = await this.SegmentRepository.findOne({
+        where: { planId, categoryId, value },
+      });
+
+      console.log({ foundSegment });
+      if (foundSegment) {
+       const response = await this.SegmentRepository.delete(foundSegment);
+       console.log({ response });
+       return {
+        status: HttpStatus.OK,
+        message: "Segment deleted successfully",
+        response,
+       }
+      }
+      throw new NotFoundException("Not found a segment with this characteristics");
+
+    }
+    throw new NotFoundException("Not found a field, please review the body");
+  }
 }
 

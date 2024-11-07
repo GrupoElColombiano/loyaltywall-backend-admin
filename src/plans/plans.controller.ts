@@ -66,6 +66,13 @@ export class PlansController {
     return this.plansService.createVersionPlan(planWithNewVersion);
   }
 
+  @Get('segments')
+  @ApiOperation({ summary: 'Find segments in CDP' })
+  // async getSegments(): Promise<any> {
+  getSegments(): Promise<any> {
+    return this.plansService.getSegments();
+  }
+
   /**
    * Find all plans.
    * @returns {Promise<any>} A promise that resolves to a list of plans.
@@ -329,7 +336,7 @@ export class PlansController {
      * @returns {Promise<any>} A promise that resolves to the found plan.
      */
     @Post('paywall/plan/versioning')
-    @ApiOperation({ summary: 'Find a plan by id' }) // Add ApiOperation summary
+    @ApiOperation({ summary: 'Find a plan by id' }) 
     setPlanVersioning(
       @Body() body: any,
     ) {
@@ -339,17 +346,15 @@ export class PlansController {
 
 
     @Get('paywall/plan/versioning/:idPlan')
-    @ApiOperation({ summary: 'Find a plan by id' }) // Add ApiOperation summary
+    @ApiOperation({ summary: 'Find a plan by id' }) 
     getPlanVersioning(
       @Param('idPlan') idPlan: number,
     ) {
       return this.plansService.getPlanVersioning(idPlan);
     }
 
-
-    setPlanSubscription
     @Get('subscription/:idPlan/:idUser')
-    @ApiOperation({ summary: 'Find a plan by id' }) // Add ApiOperation summary
+    @ApiOperation({ summary: 'Find a plan by id' }) 
     getPlanSubscription(
       @Param('idPlan') idPlan: number,
       @Param('idUser') idUser: string
@@ -357,4 +362,14 @@ export class PlansController {
       return this.plansService.getPlanSubscription(idPlan, idUser);
     }
 
+    @Delete('deleteSegment/:planId/:categoryId/:value')
+    @ApiOperation({ summary: 'Delete segment' }) 
+    deleteSegment(
+      @Param('planId') planId: string,
+      @Param('categoryId') categoryId: string,
+      @Param('value') value: string
+    ) {
+      console.log("executing deleteSegment", {  planId, categoryId, value });
+      return this.plansService.deleteSegment({ planId, categoryId, value })
+    }
 }
