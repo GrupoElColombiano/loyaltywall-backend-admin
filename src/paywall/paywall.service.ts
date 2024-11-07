@@ -1,9 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
 import { CreatePaywallDto } from './dto/create-paywall.dto';
 import { UpdatePaywallDto } from './dto/update-paywall.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
- 
+import { catchError, firstValueFrom } from 'rxjs';
+
 import { InjectRepository } from '@nestjs/typeorm';
 import { Event } from 'src/common/entity/event.entity';
 import { Site } from 'src/common/entity/site.entity';
@@ -17,14 +19,18 @@ import { Paywall, PaywallDocument } from './entities/paywall.schema';
 import { Plan, PlanDocument } from './entities/plan.schema';
 import { Segment, SegmentDocument } from './entities/segment.schema';
 
+
 import {
   PaywallData,
   PaywallDataDocument,
   PaywallDataSchema,
 } from './entities/paywall-data.schema';
-
+import { Observable } from 'rxjs';
+import { AxiosError, AxiosResponse } from 'axios';
+import {PlansService} from '../plans/plans.service'
 @Injectable()
 export class PaywallService {
+  private readonly logger = new Logger(PaywallService.name);
   constructor(
     @InjectRepository(UserPlan) 
     private readonly userPlanRepository: Repository<UserPlan>,
@@ -40,6 +46,8 @@ export class PaywallService {
     @InjectModel(Paywall.name) private paywallModel: Model<PaywallDocument>,
     @InjectModel(Plan.name) private planModel: Model<PlanDocument>,
     @InjectModel(Segment.name) private segmentModel: Model<SegmentDocument>,
+    private readonly httpService:HttpService,
+    private readonly plansService: PlansService
   ) {}
 
   create(createPaywallDto: CreatePaywallDto) {
@@ -181,7 +189,6 @@ export class PaywallService {
 
   async addMetadataPaywallMongo(obj: any): Promise<any> {
 
-    console.log(" ================ addMetadataPaywallMongo =================");
     const registrado = "Registrado";
     const anonimo = "Anónimo";  
 
@@ -195,7 +202,8 @@ export class PaywallService {
       site,
     });
 
-    console.log(" EMPIEZA ", paywallEntry)
+    const fechaActualEnMilisegundos = Date.now();
+
     if (!paywallEntry) {
       // Si no existe una entrada para esta combinación de uniqueId y sitio, crea una nueva.
       await this.paywallModel.create({
@@ -206,7 +214,7 @@ export class PaywallService {
           {
             identifier: metadata.identifier,
             isAccessibleForFree: metadata.isAccessibleForFree,
-            createDate: metadata.createDate,
+            createDate: fechaActualEnMilisegundos,
             week: metadata.week,
             category: metadata.category,
             allProduct: metadata.allProduct
@@ -214,15 +222,10 @@ export class PaywallService {
         ],
       });
 
-      console.log(" EL USER TYPE ES ", userType)
-        console.log(" EL USER TYPE ES registrado:: ", registrado)
-
       if( userType != anonimo ){
         this.registerPointsEvent( { userId:uniqueId, nameSite: site, eventoId: 2 } );
       }
     } else {
-
-      console.log(" EL REGISTRO ES ESTE VE:::: ")
       const paywallEntryCurrentMeta = await this.paywallModel.aggregate([
         {
           $match: {
@@ -246,11 +249,10 @@ export class PaywallService {
             uniqueId: 1,
             userType: 1,
             site: 1,
-            paywallData: 2,
+            paywallData: 1,
           },
         },
       ]);
-      console.log('paywallEntryCurrentMeta ', paywallEntryCurrentMeta);
 
       if (paywallEntryCurrentMeta.length == 0) {
         // Crear una instancia del modelo PaywallData
@@ -258,7 +260,7 @@ export class PaywallService {
         const newData = new PaywallData();
         newData.identifier = metadata.identifier;
         newData.isAccessibleForFree = metadata.isAccessibleForFree;
-        newData.createDate = metadata.createDate;
+        newData.createDate = fechaActualEnMilisegundos;
         newData.week = metadata.week;
         newData.category = metadata.category;
         newData.allProduct= metadata.allProduct
@@ -309,6 +311,7 @@ export class PaywallService {
     unlimited: boolean,
     allProduct: boolean,
     identifier: number,
+    idForSegment:string
   ): Promise<any> {
     const permissions = {
       template: '',
@@ -345,23 +348,9 @@ export class PaywallService {
     // Obtener los timestamps para las fechas de inicio y fin en milisegundos
     const desdeFecha = timestampSemanaAnteriorMenosUnDia;
     const hastaFecha = timestampHasta;
-
-    console.log('======= getMetadata ======== ');
-    console.log('======= getMetadata ======== ');
-    console.log('======= getMetadata ======== ');
-    console.log('uniqueId::: ', uniqueId);
-    console.log('usertype::: ', userType);
-    console.log('site::: ', site);
-    console.log(' durationParam ', durationParam);
-    console.log(' timestampSemanaAnterior ', timestampSemanaAnterior);
-    console.log('category::: ', category);
-    console.log('amount::: ', amount);
-    console.log('allProduct::: ', allProduct);
-    console.log( ' identifier:::  ', identifier);
     
 
-    // eslint-disable-next-line no-var
-    var avalaible = 0;
+    let avalaible = 0;
 
     const paywallEntryCurrent = await this.paywallModel.aggregate([
       {
@@ -388,16 +377,15 @@ export class PaywallService {
           uniqueId: 1,
           userType: 1,
           site: 1,
-          paywallData: 2,
+          paywallData: 1,
         },
       },
     ]);
 
-    console.log(' ======>>> paywallEntryCurrent <<<<===', paywallEntryCurrent);
-    if (paywallEntryCurrent) {
+     if (paywallEntryCurrent) {
       // Filtrar el arreglo por el rango de fechas
       const metaLastWeek = paywallEntryCurrent;
-      console.log('metaLastWeek ', metaLastWeek);
+
       const categoryIsAccesibleFreeCiclica = metaLastWeek.filter(
         (element) => element.paywallData.category === category,
       ).length;
@@ -406,122 +394,147 @@ export class PaywallService {
         (element) => element.paywallData.category === category,
       ).length;
 
-      console.log('isAccessibleForFree ', isAccessibleForFree);
       if (String(isAccessibleForFree).toLowerCase() == 'true') {
-        console.log(
-          '===== categoryIsAccesibleFreeCiclica ===== ',
-          categoryIsAccesibleFreeCiclica,
-        );
-
-        // eslint-disable-next-line no-var
-        avalaible = amount - categoryIsAccesibleFreeCiclica;
-
-        console.log('1) avalaible ', avalaible);
-        console.log('2) categoryIsAccesible.amount ', amount);
-
+        avalaible = Number(amount) - categoryIsAccesibleFreeCiclica;
         if (avalaible > 0) {
         }
       }
 
-      console.log('isAccessibleForFree ', isAccessibleForFree);
       if (String(isAccessibleForFree).toLowerCase() === 'false') {
-        console.log(
-          '===== categoryIsAccesibleSubscribedCiclica ===== ',
-          categoryIsAccesibleSubscribedCiclica,
-        );
 
-        // eslint-disable-next-line no-var
-        avalaible = amount - categoryIsAccesibleSubscribedCiclica;
-
-        console.log('3) avalaible ', avalaible);
-        console.log('4) categoryIsAccesible.amount ', amount);
+        avalaible = Number(amount) - categoryIsAccesibleSubscribedCiclica;
 
         if (avalaible > 0) {
         }
       }
-      console.log('ENTRO POR AQUIII ');
       // permissions.avalaible = avalaible;
     } else {
-      console.log('ENTRO POR ESTA BNIENNN  ');
       // permissions.avalaible = amount;
     }
-    console.log(' ======>>> paywallEntryCurrent <<<<===', paywallEntryCurrent);
-    /*if (paywallEntryCurrent) {
-      // Filtrar el arreglo por el rango de fechas
-      const metaLastWeek = paywallEntryCurrent;
-      console.log('metaLastWeek ', metaLastWeek);
-
-      const categoryOrIdentifier =  (String(allProduct).toLowerCase() === 'true') ? 'category' : 'paywallData.category';
-      const valueToValidate = (String(allProduct).toLowerCase() === 'true') ? category : identifier;
-
-
-      const categoryIsAccesibleFreeCiclica = metaLastWeek.filter(
-        (element) => element.paywallData[categoryOrIdentifier] === valueToValidate// element.paywallData.category === category,
-      ).length;
-
-      const categoryIsAccesibleSubscribedCiclica = metaLastWeek.filter(
-        (element) => element.paywallData[categoryOrIdentifier] === valueToValidate//element.paywallData.category === category,
-      ).length;
-
-      console.log('isAccessibleForFree ', isAccessibleForFree);
-      console.log(' categoryIsAccesibleFreeCiclica:::: ===>>> ', categoryIsAccesibleFreeCiclica);
-      if (String(isAccessibleForFree).toLowerCase() == 'true') {
-        console.log(
-          '===== categoryIsAccesibleFreeCiclica ===== ',
-          categoryIsAccesibleFreeCiclica,
-        );
-
-        // eslint-disable-next-line no-var
-        avalaible = amount - categoryIsAccesibleFreeCiclica;
-
-        console.log('1) avalaible ', avalaible);
-        console.log('2) categoryIsAccesible.amount ', amount);
-
-        if (avalaible > 0) {
-        }
-      }
-
-      console.log('isAccessibleForFree ', isAccessibleForFree);
-      if (String(isAccessibleForFree).toLowerCase() === 'false') {
-        console.log(
-          '===== categoryIsAccesibleSubscribedCiclica ===== ',
-          categoryIsAccesibleSubscribedCiclica,
-        );
-
-        // eslint-disable-next-line no-var
-        avalaible = amount - categoryIsAccesibleSubscribedCiclica;
-
-        console.log('3) avalaible ', avalaible);
-        console.log('4) categoryIsAccesible.amount ', amount);
-
-        if (avalaible > 0) {
-        }
-      }
-      console.log('ENTRO POR AQUIII ');
-      // permissions.avalaible = avalaible;
-    } else {
-      console.log('ENTRO POR ESTA BNIENNN  ');
-      // permissions.avalaible = amount;
-    }*/
 
     permissions.avalaible = avalaible;
     permissions.unlimited = unlimited;
-    // permissions.pages = JSON.stringify(paywallEntryCurrent);
-    // Devuelve los datos de permisos o lo que desees.
-    return permissions;
+
+    let segmentdisponibility:boolean;
+
+    
+    interface Product {
+      idProduct: number;
+      name: string;
+      description: string;
+      isActive: boolean;
+      all_product: boolean;
+      createdAt: string;
+      updatedAt: string;
+    }
+    
+    interface Site {
+      idSite: number;
+      name: string;
+      description: string;
+      url: string;
+      isActive: boolean;
+      createAt: string;
+      updateAt: string;
+    }
+    
+    interface Category {
+      idCategory: number;
+      name: string;
+      description: string;
+      rules: string;
+      is_accessible_for_free: boolean;
+    }
+    
+    interface CategoryAccess {
+      id: number;
+      amount: number;
+      unlimited: boolean;
+      frequency: string;
+      typeDuration: string;
+      duration: number;
+      category: Category;
+    }
+
+    interface ElementPlansProductCategory {
+      idPlansProductCategory: number;
+      product: Product;
+      sites: Site;
+      categorysAccess: CategoryAccess[];
+    }
+
+    interface PlanSegment {
+      id: string;
+      name: string;
+      value: string;
+      categoryId: string;
+      planId: number;
+      quantity: number;
+      priority: number;
+      createdAt: string;
+      updatedAt: string;
+    }
+    let segmentTotalQuantity:number;
+
+    if (permissions.unlimited.toString() === "false" && permissions.avalaible < 1) {
+      const {planId} = await this.getPlanByUserId(uniqueId)
+      const planInfo = await this.plansService.getPlanSubscription(planId, uniqueId);
+      
+      const segmentsUser = await this.getSegmentInfoUserKc(idForSegment)
+      console.log(segmentsUser)
+
+      if(planInfo && segmentsUser){
+        console.log(" planInfo ", planInfo)
+        const segmentPlan = planInfo.plansProductsCategory?.find((element:ElementPlansProductCategory) => {
+          return (
+            element.categorysAccess[0] &&
+            element.categorysAccess[0].category &&
+            element.categorysAccess[0].category.name.toLowerCase() === category.toLowerCase()
+          );
+        });
+        console.log(segmentPlan)
+        if (!segmentPlan) {
+          throw new Error('No se encontró el segmento del plan para la categoría especificada');
+        }
+
+        if(segmentPlan){
+          const cantidadPlan = segmentPlan.categorysAccess[0];
+          const filteredSegments = planInfo.segments.filter((segment:PlanSegment) => segmentsUser.includes(segment.value));
+          const segmentsQuantity = filteredSegments.find((element:PlanSegment) => Number(element.categoryId) === cantidadPlan.category.idCategory);
+          if(!segmentsQuantity){
+            const segmentsQuantityTwo = filteredSegments[0];
+            if(segmentsQuantityTwo){
+            segmentTotalQuantity = segmentsQuantityTwo.quantity;
+            } else {
+              segmentTotalQuantity = 0;
+              segmentdisponibility = false;
+            }
+          } else {
+            segmentTotalQuantity = segmentsQuantity.quantity;
+          }
+          
+        }
+      }
+      
+
+      
+      if(segmentTotalQuantity) {
+        const disponibility = segmentTotalQuantity !== paywallEntryCurrent.length
+        segmentdisponibility = disponibility
+      }
+    }
+    // Devuelve los datos de permisos
+    
+    return {permissions, segmentdisponibility};
   }
 
   async addPlanPaywallMongo(obj: any): Promise<any> {
     
-    console.log(" DIOS ES BUENO AMEN ", obj)
     let response = { permissiones: 0, plan: {} };
     const { plan, nameSite, usertype } = obj;
 
-    console.log('nameSite::: ', nameSite);
-    console.log('usertype::: ', usertype);
-    console.log('PLAN ACTUAL ASI QUE PILAS PUES ::: ', plan);
     const planEntry = await this.planModel.findOne({ nameSite, usertype });
-    console.log('planEntry::: ', planEntry);
+
     if (!planEntry) {
       // Si no existe una entrada para esta combinación de uniqueId y sitio, crea una nueva.
       await this.planModel.create({
@@ -532,7 +545,6 @@ export class PaywallService {
         // userPlans
       });
     } else {
-      console.log('El plan ya existe en el arreglo');
       response = {
         permissiones: 1,
         plan: planEntry,
@@ -605,22 +617,38 @@ export class PaywallService {
       return response;
   }
 
-  async getPlanByUserId(obj: any): Promise<any> {
-    const { userId } = obj;
-    if (userId) {
-      const result = await this.userPlanRepository
-        .createQueryBuilder('userPlan')
-        .where('userPlan.id_user = :idUser', { idUser: userId })
-        .andWhere('userPlan.is_active = :isActive', { isActive: true })
-        .getOne();
-
-      return result;
-    } 
-    throw new NotFoundException("The userId field was not found");
+  async getPlanByUserId(userId: string): Promise<any> {
+    if (!userId) {
+      throw new NotFoundException("The userId field was not found");
+    }
+  
+    const result = await this.userPlanRepository
+      .createQueryBuilder('up')
+      .leftJoin('plans', 'p', 'p.idPlan = up.id_plan')
+      .select([
+        'up.id_plan AS id_plan', 
+        'p.userType AS user_type'
+      ])
+      .where('up.id_user = :idUser', { idUser: userId })
+      .andWhere('up.is_active = true')
+      .getRawOne();
+  
+    if (result) {
+      const infoPlan = await this.plansService.getPlanSubscription(result.id_plan, userId);
+      if (!infoPlan) {
+        throw new Error('No active plan found for the given user');
+      }
+      return { 
+        plansProductsCategory: infoPlan.plansProductsCategory, 
+        userType: result.user_type,
+        planId: result.id_plan
+      };
+    }
+  
+    throw new NotFoundException("No active plan found for the given userId");
   }
 
-  async getPlanInfo(obj: any): Promise<any> {
-    const { planId } = obj;
+  async getPlanInfo(planId: string): Promise<any> {
     if (planId) {
       const planEntry = await this.planModel.findOne({ planId });
       return planEntry;
@@ -636,5 +664,23 @@ export class PaywallService {
     }
     throw new NotFoundException("The planId field or categoryId was not found");
   }
+
+  async getSegmentInfoUserKc(id_kc: string){
+    const auth = Buffer.from("karaf:karaf").toString("base64");
+    const response= await firstValueFrom(this.httpService.get(`http://190.242.47.76:8181/cxs/profiles/${id_kc}`,
+      {
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Basic ${auth}`
+      }
+    }
+    ).pipe(
+      catchError((error: AxiosError) => {
+        this.logger.error(error.response.data);
+        throw 'An error happened!';
+      }),
+    ))
+    return response.data.segments;
+  } 
 
 }

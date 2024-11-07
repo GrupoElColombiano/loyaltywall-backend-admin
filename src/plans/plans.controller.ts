@@ -357,7 +357,7 @@ export class PlansController {
     @ApiOperation({ summary: 'Find a plan by id' }) 
     getPlanSubscription(
       @Param('idPlan') idPlan: number,
-      @Param('idUser') idUser: number
+      @Param('idUser') idUser: string
     ) {
       return this.plansService.getPlanSubscription(idPlan, idUser);
     }
